@@ -140,3 +140,4 @@ evenser/
 | Reportes | Clientes por localidad, servicios por tipo, morosos, ingresos |
 | PWA | Instalable en móviles, service worker, soporte offline básico |
 | Imágenes | Upload a Cloudinary para eventos y servicios |
+# evenser
