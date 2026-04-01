@@ -9,3 +9,5 @@ dist/
 .DS_Store
 public/sw.js
 public/workbox-*.js
+evenser-webapp/
+.agents/
