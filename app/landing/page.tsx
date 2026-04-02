@@ -611,7 +611,7 @@ export default function LandingPage() {
             {testimonios.map((t, i) => (
               <div key={i} className="bg-white rounded-2xl p-6 shadow-sm">
                 <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                  "{t.texto}"
+                  &quot;{t.texto}&quot;
                 </p>
                 <p className="text-gray-400 text-xs font-medium">— {t.autor}</p>
               </div>
@@ -645,6 +645,7 @@ export default function LandingPage() {
           <h2 className="text-3xl font-bold text-center mb-12">Contacto</h2>
           <div className="grid md:grid-cols-3 gap-8">
             <div>
+              |
               <h3 className="font-semibold text-stone-300 text-sm uppercase tracking-wider mb-4">
                 Dirección
               </h3>
