@@ -7,6 +7,7 @@ import { createFamiliar, deleteFamiliar } from "@/lib/actions/familiares";
 import { createPago } from "@/lib/actions/pagos";
 import { createServicio } from "@/lib/actions/servicios";
 import { getSuscripcionByCliente } from "@/lib/actions/suscripciones";
+import { getAppConfig } from "@/lib/actions/config";
 import { Modal, Badge, EmptyState, LoadingSpinner } from "@/components/ui";
 import ClienteForm from "@/components/forms/ClienteForm";
 import FamiliarForm from "@/components/forms/FamiliarForm";
@@ -15,6 +16,8 @@ import ServicioForm from "@/components/forms/ServicioForm";
 import SuscripcionMP from "@/components/mp/SuscripcionMP";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { ArrowLeft, UserPlus, Plus, Trash2 } from "lucide-react";
+import type { SuscripcionMP as SuscripcionMPType } from "@/types";
+import type { AppConfig } from "@/lib/actions/config";
 
 const estadoPagoVariant: Record<string, "green" | "amber" | "red"> = {
   pagado: "green",
@@ -43,7 +46,10 @@ export default function ClienteDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [cliente, setCliente] = useState<any>(null);
-  const [suscripcion, setSuscripcion] = useState<any>(null);
+  const [suscripcion, setSuscripcion] = useState<SuscripcionMPType | null>(
+    null,
+  );
+  const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
   const [tab, setTab] = useState<Tab>("info");
   const [modals, setModals] = useState<Modals>({
     edit: false,
@@ -56,12 +62,14 @@ export default function ClienteDetailPage() {
 
   const load = () =>
     start(async () => {
-      const [data, sub] = await Promise.all([
+      const [data, sub, cfg] = await Promise.all([
         getClienteById(id),
         getSuscripcionByCliente(id),
+        getAppConfig(),
       ]);
       setCliente(data);
       setSuscripcion(sub);
+      setAppConfig(cfg);
     });
 
   useEffect(() => {
@@ -87,56 +95,6 @@ export default function ClienteDetailPage() {
   };
   const openModal = (key: keyof Modals) =>
     setModals((m) => ({ ...m, [key]: true }));
-
-  const handleEdit = async (data: any) => {
-    const res = await updateCliente(id, data);
-    if (res?.error) {
-      setError(res.error);
-      return;
-    }
-    closeAll();
-    load();
-  };
-
-  const handleFamiliar = async (data: any) => {
-    const res = await createFamiliar(id, data);
-    if (res?.error) {
-      setError(res.error);
-      return;
-    }
-    closeAll();
-    load();
-  };
-
-  const handleDeleteFamiliar = async (familiarId: string) => {
-    if (!window.confirm("¿Eliminar este familiar?")) return;
-    const res = await deleteFamiliar(familiarId, id);
-    if (res?.error) {
-      setError(res.error);
-      return;
-    }
-    load();
-  };
-
-  const handlePago = async (data: any) => {
-    const res = await createPago(data);
-    if (res?.error) {
-      setError(res.error);
-      return;
-    }
-    closeAll();
-    load();
-  };
-
-  const handleServicio = async (data: any) => {
-    const res = await createServicio(data);
-    if (res?.error) {
-      setError(res.error);
-      return;
-    }
-    closeAll();
-    load();
-  };
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "info", label: "Info" },
@@ -194,7 +152,6 @@ export default function ClienteDetailPage() {
       {/* Info */}
       {tab === "info" && (
         <div className="space-y-4">
-          {/* Datos personales */}
           <div className="card p-6 grid grid-cols-2 md:grid-cols-3 gap-5">
             {[
               ["Nombre completo", `${cliente.nombre} ${cliente.apellido}`],
@@ -215,11 +172,13 @@ export default function ClienteDetailPage() {
             ))}
           </div>
 
-          {/* Suscripción MP — separado, fuera del map */}
           <SuscripcionMP
             clienteId={id}
             clienteNombre={`${cliente.nombre} ${cliente.apellido}`}
+            tieneObraSocial={!!cliente.obra_social}
             suscripcion={suscripcion}
+            montoConObraSocial={appConfig?.monto_con_obra_social ?? 20000}
+            montoSinObraSocial={appConfig?.monto_sin_obra_social ?? 25000}
             onUpdate={load}
           />
         </div>
@@ -264,9 +223,14 @@ export default function ClienteDetailPage() {
                       <td>{f.parentesco}</td>
                       <td>
                         <button
-                          onClick={() => handleDeleteFamiliar(f.id)}
+                          onClick={async () => {
+                            if (!window.confirm("¿Eliminar este familiar?"))
+                              return;
+                            const res = await deleteFamiliar(f.id, id);
+                            if (res?.error) setError(res.error);
+                            else load();
+                          }}
                           className="text-red-400 hover:text-red-600"
-                          title="Eliminar"
                         >
                           <Trash2 size={14} />
                         </button>
@@ -392,18 +356,45 @@ export default function ClienteDetailPage() {
       <Modal open={modals.edit} onClose={closeAll} title="Editar cliente">
         <ClienteForm
           defaultValues={cliente}
-          onSubmit={handleEdit}
+          onSubmit={async (data) => {
+            const res = await updateCliente(id, data);
+            if (res?.error) {
+              setError(res.error);
+              return;
+            }
+            closeAll();
+            load();
+          }}
           onCancel={closeAll}
           submitLabel="Guardar cambios"
         />
       </Modal>
       <Modal open={modals.familiar} onClose={closeAll} title="Agregar familiar">
-        <FamiliarForm onSubmit={handleFamiliar} onCancel={closeAll} />
+        <FamiliarForm
+          onSubmit={async (data) => {
+            const res = await createFamiliar(id, data);
+            if (res?.error) {
+              setError(res.error);
+              return;
+            }
+            closeAll();
+            load();
+          }}
+          onCancel={closeAll}
+        />
       </Modal>
       <Modal open={modals.pago} onClose={closeAll} title="Registrar pago">
         <PagoForm
           defaultClienteId={id}
-          onSubmit={handlePago}
+          onSubmit={async (data) => {
+            const res = await createPago(data);
+            if (res?.error) {
+              setError(res.error);
+              return;
+            }
+            closeAll();
+            load();
+          }}
           onCancel={closeAll}
         />
       </Modal>
@@ -414,7 +405,15 @@ export default function ClienteDetailPage() {
       >
         <ServicioForm
           defaultClienteId={id}
-          onSubmit={handleServicio}
+          onSubmit={async (data) => {
+            const res = await createServicio(data);
+            if (res?.error) {
+              setError(res.error);
+              return;
+            }
+            closeAll();
+            load();
+          }}
           onCancel={closeAll}
         />
       </Modal>

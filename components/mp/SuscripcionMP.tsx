@@ -11,27 +11,20 @@ import {
   XCircle,
   CheckCircle,
   Clock,
+  Info,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
-
-interface Suscripcion {
-  id: string;
-  mp_preapproval_id: string;
-  monto: number;
-  estado: string;
-  init_point: string;
-  ultimo_pago?: string;
-  created_at: string;
-}
+import type { SuscripcionMP } from "@/types";
 
 interface Props {
   clienteId: string;
   clienteNombre: string;
-  suscripcion: Suscripcion | null;
+  tieneObraSocial: boolean; // nuevo: viene del cliente
+  suscripcion: SuscripcionMP | null;
+  montoConObraSocial: number; // viene de app_config
+  montoSinObraSocial: number; // viene de app_config
   onUpdate: () => void;
 }
-
-const MONTO_DEFAULT = 4500;
 
 const estadoConfig: Record<
   string,
@@ -62,11 +55,19 @@ const estadoConfig: Record<
 export default function SuscripcionMP({
   clienteId,
   clienteNombre,
+  tieneObraSocial,
   suscripcion,
+  montoConObraSocial,
+  montoSinObraSocial,
   onUpdate,
 }: Props) {
+  // Monto sugerido automáticamente según obra social
+  const montoSugerido = tieneObraSocial
+    ? montoConObraSocial
+    : montoSinObraSocial;
+
   const [loading, setLoading] = useState(false);
-  const [monto, setMonto] = useState(MONTO_DEFAULT);
+  const [monto, setMonto] = useState(montoSugerido);
   const [error, setError] = useState("");
   const [linkGenerado, setLinkGenerado] = useState<string | null>(null);
 
@@ -118,27 +119,44 @@ export default function SuscripcionMP({
         </div>
       )}
 
-      {/* Sin suscripción */}
+      {/* Sin suscripción activa */}
       {!suscripcion && !linkGenerado && (
         <div className="space-y-3">
-          <p className="text-sm text-gray-500">
-            No hay suscripción activa para este cliente.
-          </p>
-          <div className="flex items-center gap-3">
-            <div>
-              <label className="text-xs text-gray-500 uppercase tracking-wide block mb-1">
-                Monto mensual (ARS)
-              </label>
-              <input
-                type="number"
-                value={monto}
-                onChange={(e) => setMonto(Number(e.target.value))}
-                className="input w-36 text-sm"
-                min={100}
-                step={100}
-              />
-            </div>
+          {/* Aviso automático de obra social */}
+          <div className="flex items-start gap-2 text-xs text-gray-500 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
+            <Info size={13} className="mt-0.5 shrink-0 text-brand-600" />
+            <span>
+              Monto sugerido automáticamente:{" "}
+              <strong className="text-gray-700">
+                {formatCurrency(montoSugerido)}/mes
+              </strong>{" "}
+              — cliente{" "}
+              {tieneObraSocial ? (
+                <span className="text-green-700 font-medium">
+                  con obra social
+                </span>
+              ) : (
+                <span className="text-amber-700 font-medium">
+                  sin obra social
+                </span>
+              )}
+            </span>
           </div>
+
+          <div>
+            <label className="text-xs text-gray-500 uppercase tracking-wide block mb-1">
+              Monto mensual (ARS)
+            </label>
+            <input
+              type="number"
+              value={monto}
+              onChange={(e) => setMonto(Number(e.target.value))}
+              className="input w-40 text-sm"
+              min={100}
+              step={100}
+            />
+          </div>
+
           <button
             onClick={handleCrear}
             disabled={loading}
@@ -150,7 +168,7 @@ export default function SuscripcionMP({
         </div>
       )}
 
-      {/* Link generado — para enviar al cliente */}
+      {/* Link recién generado */}
       {linkGenerado && (
         <div className="space-y-3">
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
@@ -202,8 +220,7 @@ export default function SuscripcionMP({
             </p>
           )}
 
-          <div className="flex gap-2 pt-1">
-            {/* Si está pendiente, mostrar el link para reenviar */}
+          <div className="flex gap-2 pt-1 flex-wrap">
             {suscripcion.estado === "pendiente" && (
               <button
                 onClick={() => handleCopiarLink(suscripcion.init_point)}
@@ -213,7 +230,6 @@ export default function SuscripcionMP({
               </button>
             )}
 
-            {/* Cancelar si está activa o pausada */}
             {["activa", "pausada", "pendiente"].includes(
               suscripcion.estado,
             ) && (
@@ -227,7 +243,6 @@ export default function SuscripcionMP({
               </button>
             )}
 
-            {/* Si cancelada, permitir crear nueva */}
             {suscripcion.estado === "cancelada" && (
               <button
                 onClick={handleCrear}
