@@ -6,11 +6,13 @@ import { getClienteById, updateCliente } from "@/lib/actions/clientes";
 import { createFamiliar, deleteFamiliar } from "@/lib/actions/familiares";
 import { createPago } from "@/lib/actions/pagos";
 import { createServicio } from "@/lib/actions/servicios";
+import { getSuscripcionByCliente } from "@/lib/actions/suscripciones";
 import { Modal, Badge, EmptyState, LoadingSpinner } from "@/components/ui";
 import ClienteForm from "@/components/forms/ClienteForm";
 import FamiliarForm from "@/components/forms/FamiliarForm";
 import PagoForm from "@/components/forms/PagoForm";
 import ServicioForm from "@/components/forms/ServicioForm";
+import SuscripcionMP from "@/components/mp/SuscripcionMP";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { ArrowLeft, UserPlus, Plus, Trash2 } from "lucide-react";
 
@@ -41,6 +43,7 @@ export default function ClienteDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [cliente, setCliente] = useState<any>(null);
+  const [suscripcion, setSuscripcion] = useState<any>(null);
   const [tab, setTab] = useState<Tab>("info");
   const [modals, setModals] = useState<Modals>({
     edit: false,
@@ -53,8 +56,12 @@ export default function ClienteDetailPage() {
 
   const load = () =>
     start(async () => {
-      const data = await getClienteById(id);
+      const [data, sub] = await Promise.all([
+        getClienteById(id),
+        getSuscripcionByCliente(id),
+      ]);
       setCliente(data);
+      setSuscripcion(sub);
     });
 
   useEffect(() => {
@@ -103,7 +110,7 @@ export default function ClienteDetailPage() {
 
   const handleDeleteFamiliar = async (familiarId: string) => {
     if (!window.confirm("¿Eliminar este familiar?")) return;
-    const res = await deleteFamiliar(familiarId, id); // pasamos id del cliente para revalidar
+    const res = await deleteFamiliar(familiarId, id);
     if (res?.error) {
       setError(res.error);
       return;
@@ -140,6 +147,7 @@ export default function ClienteDetailPage() {
 
   return (
     <div>
+      {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={() => router.back()}
@@ -166,6 +174,7 @@ export default function ClienteDetailPage() {
         </div>
       )}
 
+      {/* Tabs */}
       <div className="flex gap-1 mb-6 border-b border-gray-200">
         {tabs.map(({ key, label }) => (
           <button
@@ -182,28 +191,41 @@ export default function ClienteDetailPage() {
         ))}
       </div>
 
+      {/* Info */}
       {tab === "info" && (
-        <div className="card p-6 grid grid-cols-2 md:grid-cols-3 gap-5">
-          {[
-            ["Nombre completo", `${cliente.nombre} ${cliente.apellido}`],
-            ["DNI", cliente.dni],
-            ["Teléfono", cliente.telefono],
-            ["Ocupación", cliente.ocupacion || "—"],
-            ["Obra social", cliente.obra_social || "—"],
-            ["Localidad", cliente.localidad],
-            ["Carpeta / Ref.", cliente.carpeta_nacimiento || "—"],
-            ["Alta en sistema", formatDate(cliente.created_at)],
-          ].map(([label, value]) => (
-            <div key={label}>
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
-                {label}
-              </p>
-              <p className="text-sm font-medium text-gray-900">{value}</p>
-            </div>
-          ))}
+        <div className="space-y-4">
+          {/* Datos personales */}
+          <div className="card p-6 grid grid-cols-2 md:grid-cols-3 gap-5">
+            {[
+              ["Nombre completo", `${cliente.nombre} ${cliente.apellido}`],
+              ["DNI", cliente.dni],
+              ["Teléfono", cliente.telefono],
+              ["Ocupación", cliente.ocupacion || "—"],
+              ["Obra social", cliente.obra_social || "—"],
+              ["Localidad", cliente.localidad],
+              ["Carpeta / Ref.", cliente.carpeta_nacimiento || "—"],
+              ["Alta en sistema", formatDate(cliente.created_at)],
+            ].map(([label, value]) => (
+              <div key={label}>
+                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+                  {label}
+                </p>
+                <p className="text-sm font-medium text-gray-900">{value}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Suscripción MP — separado, fuera del map */}
+          <SuscripcionMP
+            clienteId={id}
+            clienteNombre={`${cliente.nombre} ${cliente.apellido}`}
+            suscripcion={suscripcion}
+            onUpdate={load}
+          />
         </div>
       )}
 
+      {/* Familia */}
       {tab === "familia" && (
         <div>
           <div className="flex justify-end mb-4">
@@ -258,6 +280,7 @@ export default function ClienteDetailPage() {
         </div>
       )}
 
+      {/* Pagos */}
       {tab === "pagos" && (
         <div>
           <div className="flex justify-end mb-4">
@@ -314,6 +337,7 @@ export default function ClienteDetailPage() {
         </div>
       )}
 
+      {/* Servicios */}
       {tab === "servicios" && (
         <div>
           <div className="flex justify-end mb-4">
@@ -364,6 +388,7 @@ export default function ClienteDetailPage() {
         </div>
       )}
 
+      {/* Modals */}
       <Modal open={modals.edit} onClose={closeAll} title="Editar cliente">
         <ClienteForm
           defaultValues={cliente}
