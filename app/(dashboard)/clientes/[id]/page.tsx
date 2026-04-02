@@ -72,6 +72,7 @@ export default function ClienteDetailPage() {
       setAppConfig(cfg);
     });
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     load();
   }, [id]);

@@ -57,7 +57,23 @@ export async function updateConfigValue(clave: string, valor: string) {
 }
 
 // Actualiza múltiples claves de una vez (para el form completo)
+// Buscar esta línea:
 export async function updateAppConfig(values: Partial<Record<string, string>>) {
+  const supabase = createClient();
+
+  const updates = Object.entries(values).map(([clave, valor]) =>
+    supabase.from("app_config").update({ valor }).eq("clave", clave),
+  );
+
+  await Promise.all(updates);
+  revalidatePath("/configuracion");
+  return { success: true };
+}
+
+// Reemplazar por:
+export async function updateAppConfig(
+  values: Partial<Record<string, string>>,
+): Promise<{ success: boolean; error?: string }> {
   const supabase = createClient();
 
   const updates = Object.entries(values).map(([clave, valor]) =>
