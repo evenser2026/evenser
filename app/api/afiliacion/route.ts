@@ -21,8 +21,8 @@ export async function POST(request: NextRequest) {
 
     const supabase = createClient();
 
-    // Guardar el cliente en la base de datos
-    const { data, error } = await supabase
+    // 1. Crear cliente en la DB
+    const { data: cliente, error } = await supabase
       .from("clients")
       .insert({
         nombre,
@@ -38,20 +38,69 @@ export async function POST(request: NextRequest) {
       .select("id")
       .single();
 
-    if (error) {
+    if (error || !cliente) {
       console.error("[Afiliación] Error guardando cliente:", error);
-      // No retornamos error al cliente — mejor que el formulario funcione
-      // aunque haya un problema técnico
       return NextResponse.json({
         success: true,
         message: "Solicitud recibida",
       });
     }
 
+    // 2. Monto según obra social
+    const monto = obra_social && obra_social.trim() !== "" ? 20000 : 25000;
+
+    // 3. Generar suscripción MP
+    const appUrl =
+      process.env.NEXT_PUBLIC_APP_URL || "https://evenser.vercel.app";
+    const accessToken = process.env.MP_ACCESS_TOKEN;
+
+    if (!accessToken) {
+      return NextResponse.json({ success: true, clienteId: cliente.id });
+    }
+
+    const mpRes = await fetch("https://api.mercadopago.com/preapproval", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        reason: `Cuota mensual Evenser - ${apellido}, ${nombre}`,
+        auto_recurring: {
+          frequency: 1,
+          frequency_type: "months",
+          transaction_amount: monto,
+          currency_id: "ARS",
+        },
+        payer_email:
+          process.env.MP_TEST_PAYER_EMAIL || "test_user@testuser.com",
+        back_url: `${appUrl}/landing?afiliado=ok`,
+        status: "pending",
+      }),
+    });
+
+    const mpData = await mpRes.json();
+
+    if (!mpRes.ok || !mpData.init_point) {
+      console.error("[Afiliación] Error MP:", mpData);
+      return NextResponse.json({ success: true, clienteId: cliente.id });
+    }
+
+    // 4. Guardar suscripción en DB
+    await supabase.from("suscripciones_mp").insert({
+      cliente_id: cliente.id,
+      mp_preapproval_id: mpData.id,
+      monto,
+      estado: "pendiente",
+      init_point: mpData.init_point,
+    });
+
+    // 5. Devolver link de pago
     return NextResponse.json({
       success: true,
-      clienteId: data?.id,
-      message: "Solicitud de afiliación recibida correctamente",
+      clienteId: cliente.id,
+      init_point: mpData.init_point,
+      monto,
     });
   } catch (error) {
     console.error("[Afiliación] Error:", error);

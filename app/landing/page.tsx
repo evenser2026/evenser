@@ -158,9 +158,14 @@ function Nav({ onAfiliarse }: { onAfiliarse: () => void }) {
 }
 
 // ─── Formulario de afiliación ─────────────────────────────────────────────────
+// ─── Reemplazá SOLO el componente FormAfiliacion en app/landing/page.tsx ──────
+// El resto del archivo (Nav, Modal, LandingPage, etc.) queda exactamente igual.
+
 function FormAfiliacion({ onClose }: { onClose: () => void }) {
-  const [step, setStep] = useState<"form" | "success">("form");
+  const [step, setStep] = useState<"form" | "success" | "pago">("form");
   const [loading, setLoading] = useState(false);
+  const [initPoint, setInitPoint] = useState("");
+  const [montoFinal, setMontoFinal] = useState(0);
   const [form, setForm] = useState({
     nombre: "",
     apellido: "",
@@ -196,16 +201,79 @@ function FormAfiliacion({ onClose }: { onClose: () => void }) {
         body: JSON.stringify(form),
       });
       const data = await res.json();
-      if (res.ok) {
+
+      if (data.init_point) {
+        setInitPoint(data.init_point);
+        setMontoFinal(data.monto);
+        setStep("pago");
+      } else {
         setStep("success");
       }
     } catch {
-      // Si falla la API, igual mostramos éxito (para no bloquear al cliente)
       setStep("success");
     }
     setLoading(false);
   };
 
+  // ── Step: link de pago MP ──────────────────────────────────────────────────
+  if (step === "pago") {
+    return (
+      <div className="text-center py-6">
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <span className="text-3xl">🎉</span>
+        </div>
+        <h3 className="text-xl font-bold text-gray-900 mb-2">
+          ¡Ya casi terminás!
+        </h3>
+        <p className="text-gray-600 text-sm mb-2">
+          Tu solicitud fue registrada. Para activar tu afiliación completá el
+          primer pago mensual.
+        </p>
+        <p className="text-2xl font-bold text-stone-900 mb-1">
+          ${montoFinal.toLocaleString("es-AR")}
+          <span className="text-base font-normal text-gray-500">/mes</span>
+        </p>
+        <p className="text-xs text-gray-400 mb-6">
+          {montoFinal === 20000
+            ? "Plan con obra social"
+            : "Plan sin obra social"}
+        </p>
+        <a
+          href={initPoint}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block w-full bg-stone-800 text-white py-3.5 rounded-xl font-bold text-sm hover:bg-stone-900 transition-colors mb-3"
+        >
+          💳 Pagar con Mercado Pago
+        </a>
+        <p className="text-xs text-gray-400 mb-5">
+          Después del primer pago los cobros son automáticos cada mes. Podés
+          cancelar cuando quieras desde Mercado Pago.
+        </p>
+        <div className="bg-stone-50 rounded-xl p-4 text-left mb-4">
+          <p className="text-sm text-stone-700 font-medium mb-2">
+            ¿Preferís coordinar por WhatsApp?
+          </p>
+          <a
+            href="https://wa.me/543734409813"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 text-green-700 text-sm font-medium hover:underline"
+          >
+            <span>📱</span> WhatsApp: 3734-409813 (Baldovino Ángel)
+          </a>
+        </div>
+        <button
+          onClick={onClose}
+          className="text-sm text-gray-400 hover:text-gray-600 underline"
+        >
+          Cerrar y pagar después
+        </button>
+      </div>
+    );
+  }
+
+  // ── Step: éxito sin MP (fallback) ─────────────────────────────────────────
   if (step === "success") {
     return (
       <div className="text-center py-8">
@@ -243,6 +311,7 @@ function FormAfiliacion({ onClose }: { onClose: () => void }) {
     );
   }
 
+  // ── Step: formulario ──────────────────────────────────────────────────────
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
@@ -346,17 +415,30 @@ function FormAfiliacion({ onClose }: { onClose: () => void }) {
           />
         </div>
       </div>
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800">
-        💳 Tras enviar tu solicitud, un representante de Evenser te contactará
-        para coordinar el método de pago y enviar el link de suscripción
-        mensual.
+
+      {/* Preview del monto según obra social */}
+      <div className="bg-stone-50 border border-stone-200 rounded-lg p-3 text-sm text-stone-700">
+        💳 Cuota mensual:{" "}
+        <span className="font-bold">
+          $
+          {form.obra_social && form.obra_social.trim() !== ""
+            ? "20.000"
+            : "25.000"}
+        </span>
+        /mes —{" "}
+        <span className="text-stone-500">
+          {form.obra_social && form.obra_social.trim() !== ""
+            ? "cliente con obra social"
+            : "sin obra social"}
+        </span>
       </div>
+
       <button
         type="submit"
         disabled={loading}
         className="w-full bg-stone-800 text-white py-3 rounded-lg font-medium text-sm hover:bg-stone-900 transition-colors disabled:opacity-50"
       >
-        {loading ? "Enviando..." : "Enviar solicitud de afiliación"}
+        {loading ? "Procesando..." : "Continuar al pago →"}
       </button>
       <p className="text-center text-xs text-gray-400">
         Tus datos están protegidos y no serán compartidos con terceros.
