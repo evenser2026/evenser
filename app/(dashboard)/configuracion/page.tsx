@@ -11,8 +11,10 @@ import {
   Mail,
   Clock,
   Save,
+  Bell,
 } from "lucide-react";
 import { FormField } from "@/components/ui";
+import PushNotifications from "@/components/PushNotifications";
 
 export default function ConfiguracionPage() {
   const [config, setConfig] = useState<AppConfig | null>(null);
@@ -168,33 +170,6 @@ export default function ConfiguracionPage() {
           </div>
         </div>
 
-        {/* Pagos */}
-        <div className="card p-6">
-          <div className="flex items-center gap-2 mb-5 pb-3 border-b border-gray-100">
-            <Clock size={18} className="text-brand-700" />
-            <h2 className="font-semibold text-gray-900">
-              Configuración de pagos
-            </h2>
-          </div>
-          <div className="max-w-xs">
-            <FormField label="Días de gracia (checkout Mercado Pago)">
-              <input
-                type="number"
-                value={config.checkout_dias}
-                onChange={(e) =>
-                  handleChange("checkout_dias", Number(e.target.value))
-                }
-                className="input"
-                min={1}
-                max={90}
-              />
-              <p className="text-xs text-gray-400 mt-1">
-                Días hasta que un pago pendiente se marca como vencido
-              </p>
-            </FormField>
-          </div>
-        </div>
-
         {/* Empresa */}
         <div className="card p-6">
           <div className="flex items-center gap-2 mb-5 pb-3 border-b border-gray-100">
@@ -244,6 +219,25 @@ export default function ConfiguracionPage() {
                 />
               </div>
             </FormField>
+          </div>
+        </div>
+
+        {/* Notificaciones push */}
+        <div className="card p-6">
+          <div className="flex items-center gap-2 mb-5 pb-3 border-b border-gray-100">
+            <Bell size={18} className="text-brand-700" />
+            <h2 className="font-semibold text-gray-900">Notificaciones</h2>
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-700 font-medium">
+                Notificaciones push
+              </p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Recibí alertas en este dispositivo aunque la app esté cerrada
+              </p>
+            </div>
+            <PushNotifications />
           </div>
         </div>
       </div>

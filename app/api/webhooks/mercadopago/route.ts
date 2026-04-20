@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { enviarNotificacion } from "@/lib/actions/push";
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,12 +9,10 @@ export async function POST(request: NextRequest) {
 
     console.log("[MP Webhook]", type, data?.id);
 
-    // Pago de suscripción aprobado
     if (type === "payment") {
       await handlePago(data.id);
     }
 
-    // Cambio de estado en suscripción
     if (type === "subscription_preapproval") {
       await handleSuscripcion(data.id);
     }
@@ -25,7 +24,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET para que MP pueda verificar la URL
 export async function GET() {
   return NextResponse.json({ ok: true });
 }
@@ -34,7 +32,6 @@ async function handlePago(pagoId: string) {
   const accessToken = process.env.MP_ACCESS_TOKEN;
   if (!accessToken) return;
 
-  // Consultar el pago en MP
   const res = await fetch(`https://api.mercadopago.com/v1/payments/${pagoId}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
@@ -42,12 +39,10 @@ async function handlePago(pagoId: string) {
   if (!res.ok) return;
   const pago = await res.json();
 
-  // Solo procesar pagos aprobados de suscripciones
   if (pago.status !== "approved" || !pago.preapproval_id) return;
 
   const supabase = createClient();
 
-  // Buscar la suscripción en nuestra DB
   const { data: suscripcion } = await supabase
     .from("suscripciones_mp")
     .select("cliente_id, monto")
@@ -62,7 +57,7 @@ async function handlePago(pagoId: string) {
     return;
   }
 
-  // Registrar el pago automáticamente en payments
+  // Registrar el pago en la DB
   await supabase.from("payments").insert({
     cliente_id: suscripcion.cliente_id,
     monto: pago.transaction_amount || suscripcion.monto,
@@ -84,6 +79,14 @@ async function handlePago(pagoId: string) {
     "[MP Webhook] Pago registrado para cliente:",
     suscripcion.cliente_id,
   );
+
+  // ✅ Notificar DESPUÉS de registrar todo correctamente
+  await enviarNotificacion({
+    titulo: "💳 Pago recibido",
+    cuerpo: `Se registró un pago de $${pago.transaction_amount}`,
+    url: `/clientes/${suscripcion.cliente_id}`,
+    clienteId: suscripcion.cliente_id,
+  });
 }
 
 async function handleSuscripcion(preapprovalId: string) {

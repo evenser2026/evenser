@@ -14,25 +14,71 @@ import {
   X,
   LogOut,
   Settings,
+  HeartPulse,
+  PawPrint,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const nav = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+};
+
+const nav: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/clientes", label: "Clientes", icon: Users },
   { href: "/pagos", label: "Pagos", icon: CreditCard },
   { href: "/servicios", label: "Servicios", icon: Briefcase },
   { href: "/convenios", label: "Convenios", icon: Handshake },
+  { href: "/fallecidos", label: "Fallecidos", icon: HeartPulse },
+  { href: "/mascotas", label: "Cremación mascotas", icon: PawPrint },
+  { href: "/contabilidad", label: "Contabilidad", icon: BookOpen },
   { href: "/reportes", label: "Reportes", icon: BarChart3 },
 ];
+
+function NavLink({
+  href,
+  label,
+  icon: Icon,
+  active,
+  onClick,
+}: {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+  active: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+        active
+          ? "bg-brand-50 text-brand-800 border border-brand-100"
+          : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
+      )}
+    >
+      <Icon size={18} />
+      {label}
+    </Link>
+  );
+}
 
 export default function Sidebar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
+  const isActive = (href: string) =>
+    href === "/dashboard"
+      ? pathname === href
+      : pathname === href || pathname.startsWith(href + "/");
+
   return (
     <>
-      {/* Mobile top bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-200 flex items-center justify-between px-4 h-14">
         <span className="font-bold text-brand-800 text-lg">Evenser</span>
         <button
@@ -68,42 +114,27 @@ export default function Sidebar() {
           </div>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {nav.map(({ href, label, icon: Icon }) => (
-            <Link
+        <nav className="flex-1 p-4 space-y-0.5 overflow-y-auto">
+          {nav.map(({ href, label, icon }) => (
+            <NavLink
               key={href}
               href={href}
+              label={label}
+              icon={icon}
+              active={isActive(href)}
               onClick={() => setOpen(false)}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                pathname === href ||
-                  (href !== "/dashboard" && pathname.startsWith(href))
-                  ? "bg-brand-50 text-brand-800 border border-brand-100"
-                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
-              )}
-            >
-              <Icon size={18} />
-              {label}
-            </Link>
+            />
           ))}
         </nav>
 
-        {/* Configuración separada al fondo */}
         <div className="p-4 border-t border-gray-100 space-y-1">
-          <Link
+          <NavLink
             href="/configuracion"
+            label="Configuración"
+            icon={Settings}
+            active={pathname === "/configuracion"}
             onClick={() => setOpen(false)}
-            className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-              pathname === "/configuracion"
-                ? "bg-brand-50 text-brand-800 border border-brand-100"
-                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
-            )}
-          >
-            <Settings size={18} />
-            Configuración
-          </Link>
-
+          />
           <form action={logout}>
             <button
               type="submit"

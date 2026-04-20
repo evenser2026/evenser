@@ -2,36 +2,37 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 const servicios = [
   {
-    icon: "🕊️",
+    icon: "https://res.cloudinary.com/dmqm4b1y3/image/upload/v1776720848/evenser_servicios/n5f4lefhuboamhtx8cav.jpg",
     titulo: "Sala y Calle",
     desc: "Servicio completo de velatorio en sala y acompañamiento en el cortejo fúnebre, coordinando cada detalle con delicadeza.",
   },
   {
-    icon: "🚐",
+    icon: "https://res.cloudinary.com/dmqm4b1y3/image/upload/v1776720849/evenser_servicios/ufj5nlwgbinszkoo9qze.jpg",
     titulo: "Traslado",
     desc: "Traslado del ser querido desde cualquier punto, con total discreción y respeto. Cobertura regional.",
   },
   {
-    icon: "🔥",
+    icon: "https://res.cloudinary.com/dmqm4b1y3/image/upload/v1776721683/evenser_servicios/ofuztgjdxcw9pdqg2svu.webp",
     titulo: "Cremaciones",
     desc: "Servicio de cremación con instalaciones modernas y seguras. Nos encargamos de todo el proceso.",
   },
   {
-    icon: "📋",
+    icon: "https://res.cloudinary.com/dmqm4b1y3/image/upload/v1776721684/evenser_servicios/xiaz3q4y9iikotbdeqmo.jpg",
     titulo: "Trámites Registro Civil",
     desc: "Gestionamos certificados de defunción, inscripción del fallecimiento y todos los trámites legales requeridos.",
   },
   {
-    icon: "🌸",
+    icon: "https://res.cloudinary.com/dmqm4b1y3/image/upload/v1776720852/evenser_servicios/jr4bt0nz2cwngmaoc46h.avif",
     titulo: "Accesorios Funerarios",
     desc: "Coronas de flores, urnas funerarias, lápidas personalizadas y joyería conmemorativa.",
   },
   {
-    icon: "☕",
+    icon: "https://res.cloudinary.com/dmqm4b1y3/image/upload/v1776720853/evenser_servicios/luhgvy4eu6xdvxumqbft.png",
     titulo: "Cafetería",
     desc: "Espacio íntimo con bebidas y bocadillos para que los dolientes puedan descansar y encontrar consuelo.",
   },
@@ -161,16 +162,23 @@ function Nav({ onAfiliarse }: { onAfiliarse: () => void }) {
 // ─── Reemplazá SOLO el componente FormAfiliacion en app/landing/page.tsx ──────
 // El resto del archivo (Nav, Modal, LandingPage, etc.) queda exactamente igual.
 
+// ─── REEMPLAZÁ SOLO ESTA FUNCIÓN en app/landing/page.tsx ─────────────────────
+// Buscá "function FormAfiliacion" y reemplazá todo hasta el cierre de la función
+// El resto del archivo (imports, Nav, Modal, LandingPage, etc.) NO se toca.
+// ─────────────────────────────────────────────────────────────────────────────
+
 function FormAfiliacion({ onClose }: { onClose: () => void }) {
-  const [step, setStep] = useState<"form" | "success" | "pago">("form");
+  const [step, setStep] = useState<"form" | "pago" | "success">("form");
   const [loading, setLoading] = useState(false);
   const [initPoint, setInitPoint] = useState("");
   const [montoFinal, setMontoFinal] = useState(0);
+  const [apiError, setApiError] = useState("");
   const [form, setForm] = useState({
     nombre: "",
     apellido: "",
     dni: "",
     telefono: "",
+    email: "",
     ocupacion: "",
     obra_social: "",
     localidad: "",
@@ -190,10 +198,12 @@ function FormAfiliacion({ onClose }: { onClose: () => void }) {
       !form.apellido ||
       !form.dni ||
       !form.telefono ||
-      !form.localidad
+      !form.localidad ||
+      !form.email
     )
       return;
     setLoading(true);
+    setApiError("");
     try {
       const res = await fetch("/api/afiliacion", {
         method: "POST",
@@ -201,6 +211,12 @@ function FormAfiliacion({ onClose }: { onClose: () => void }) {
         body: JSON.stringify(form),
       });
       const data = await res.json();
+
+      if (!res.ok && data.error) {
+        setApiError(data.error);
+        setLoading(false);
+        return;
+      }
 
       if (data.init_point) {
         setInitPoint(data.init_point);
@@ -215,7 +231,7 @@ function FormAfiliacion({ onClose }: { onClose: () => void }) {
     setLoading(false);
   };
 
-  // ── Step: link de pago MP ──────────────────────────────────────────────────
+  // ── Step: pago MP ──────────────────────────────────────────────────────────
   if (step === "pago") {
     return (
       <div className="text-center py-6">
@@ -273,7 +289,7 @@ function FormAfiliacion({ onClose }: { onClose: () => void }) {
     );
   }
 
-  // ── Step: éxito sin MP (fallback) ─────────────────────────────────────────
+  // ── Step: éxito fallback sin MP ────────────────────────────────────────────
   if (step === "success") {
     return (
       <div className="text-center py-8">
@@ -284,13 +300,12 @@ function FormAfiliacion({ onClose }: { onClose: () => void }) {
           ¡Solicitud enviada!
         </h3>
         <p className="text-gray-600 text-sm mb-6">
-          Recibimos tu solicitud de afiliación. Un representante de Evenser se
-          pondrá en contacto con vos en breve para completar el proceso y
-          coordinar el pago.
+          Recibimos tu solicitud. Un representante de Evenser te contactará en
+          breve para coordinar el pago y activar tu afiliación.
         </p>
         <div className="bg-stone-50 rounded-xl p-4 text-left mb-6">
           <p className="text-sm text-stone-700 font-medium mb-2">
-            También podés contactarnos directamente:
+            Contactanos directamente:
           </p>
           <a
             href="https://wa.me/543734409813"
@@ -311,7 +326,10 @@ function FormAfiliacion({ onClose }: { onClose: () => void }) {
     );
   }
 
-  // ── Step: formulario ──────────────────────────────────────────────────────
+  // ── Step: formulario ───────────────────────────────────────────────────────
+  const montoPreview =
+    form.obra_social && form.obra_social.trim() !== "" ? 20000 : 25000;
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
@@ -342,6 +360,7 @@ function FormAfiliacion({ onClose }: { onClose: () => void }) {
           />
         </div>
       </div>
+
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -370,6 +389,25 @@ function FormAfiliacion({ onClose }: { onClose: () => void }) {
           />
         </div>
       </div>
+
+      <div>
+        <label className="block text-xs font-medium text-gray-700 mb-1">
+          Email *
+        </label>
+        <input
+          name="email"
+          type="email"
+          value={form.email}
+          onChange={handleChange}
+          required
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-stone-500"
+          placeholder="juan@ejemplo.com"
+        />
+        <p className="text-xs text-gray-400 mt-1">
+          Necesario para vincular tu suscripción en Mercado Pago
+        </p>
+      </div>
+
       <div>
         <label className="block text-xs font-medium text-gray-700 mb-1">
           Localidad *
@@ -389,6 +427,7 @@ function FormAfiliacion({ onClose }: { onClose: () => void }) {
           ))}
         </select>
       </div>
+
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -416,22 +455,23 @@ function FormAfiliacion({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
-      {/* Preview del monto según obra social */}
-      <div className="bg-stone-50 border border-stone-200 rounded-lg p-3 text-sm text-stone-700">
-        💳 Cuota mensual:{" "}
-        <span className="font-bold">
-          $
+      {/* Preview monto dinámico */}
+      <div className="bg-stone-50 border border-stone-200 rounded-lg p-3 flex items-center justify-between">
+        <span className="text-sm text-stone-600">
           {form.obra_social && form.obra_social.trim() !== ""
-            ? "20.000"
-            : "25.000"}
+            ? "✓ Con obra social"
+            : "Sin obra social"}
         </span>
-        /mes —{" "}
-        <span className="text-stone-500">
-          {form.obra_social && form.obra_social.trim() !== ""
-            ? "cliente con obra social"
-            : "sin obra social"}
+        <span className="font-bold text-stone-900">
+          ${montoPreview.toLocaleString("es-AR")}/mes
         </span>
       </div>
+
+      {apiError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+          {apiError}
+        </div>
+      )}
 
       <button
         type="submit"
@@ -481,6 +521,7 @@ function Modal({ open, onClose }: { open: boolean; onClose: () => void }) {
 // ─── Main Landing ─────────────────────────────────────────────────────────────
 export default function LandingPage() {
   const [modalOpen, setModalOpen] = useState(false);
+  const [expandedImage, setExpandedImage] = useState<string | null>(null);
 
   return (
     <div className="min-h-screen bg-white font-sans">
@@ -572,7 +613,23 @@ export default function LandingPage() {
                 key={s.titulo}
                 className="bg-stone-50 rounded-2xl p-6 hover:shadow-md transition-shadow"
               >
-                <div className="text-3xl mb-4">{s.icon}</div>
+                <div
+                  className="relative w-48 h-48 mb-4 rounded-2xl overflow-hidden mx-auto cursor-pointer group"
+                  onClick={() => setExpandedImage(s.icon)}
+                >
+                  <Image
+                    src={s.icon}
+                    alt={s.titulo}
+                    fill
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    sizes="192px"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                    <span className="text-white opacity-0 group-hover:opacity-100 transition-opacity text-4xl">
+                      🔍
+                    </span>
+                  </div>
+                </div>
                 <h3 className="font-bold text-gray-900 mb-2">{s.titulo}</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
                   {s.desc}
@@ -727,11 +784,18 @@ export default function LandingPage() {
           <h2 className="text-3xl font-bold text-center mb-12">Contacto</h2>
           <div className="grid md:grid-cols-3 gap-8">
             <div>
-              |
               <h3 className="font-semibold text-stone-300 text-sm uppercase tracking-wider mb-4">
                 Dirección
               </h3>
-              <p className="text-white">Fortunato Pértile 637</p>
+              <p className="text-white">
+                <a
+                  href="https://maps.app.goo.gl/ZziYZ3Nb7tEUoFLP6"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  📍Fortunato Pértile 637
+                </a>
+              </p>
               <p className="text-stone-400 text-sm">Colonia Elisa, Chaco</p>
             </div>
             <div>
@@ -826,6 +890,34 @@ export default function LandingPage() {
       </footer>
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} />
+
+      {/* Lightbox para imágenes de servicios */}
+      {expandedImage && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setExpandedImage(null)}
+        >
+          <button
+            onClick={() => setExpandedImage(null)}
+            className="absolute top-4 right-4 text-white text-3xl hover:text-gray-300 transition-colors"
+          >
+            ×
+          </button>
+          <div className="relative w-full max-w-3xl h-[70vh] rounded-2xl overflow-hidden">
+            <Image
+              src={expandedImage}
+              alt="Servicio"
+              fill
+              className="object-contain"
+              sizes="(max-width: 768px) 100vw, 768px"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+          <p className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white text-sm bg-black/50 px-3 py-1 rounded-full">
+            Toca en cualquier lugar para cerrar
+          </p>
+        </div>
+      )}
     </div>
   );
 }

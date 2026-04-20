@@ -38,7 +38,12 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isAuthRoute = pathname.startsWith("/auth/login");
-  const isPublicRoute = pathname === "/";
+  const isPublicRoute =
+    pathname === "/" ||
+    pathname.startsWith("/landing") ||
+    pathname.startsWith("/cementerio") ||
+    pathname.startsWith("/api/afiliacion") ||
+    pathname.startsWith("/api/webhooks");
   const isStaticRoute =
     pathname.startsWith("/_next") ||
     pathname.startsWith("/icons") ||

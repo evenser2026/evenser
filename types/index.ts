@@ -1,3 +1,8 @@
+// ============================================================
+// EVENSER — Tipos TypeScript
+// ============================================================
+
+// ── Enums base ────────────────────────────────────────────────
 export type Localidad =
   | "Col. Elisa"
   | "La Escondida"
@@ -35,6 +40,11 @@ export type EstadoSuscripcion =
   | "pausada"
   | "cancelada";
 
+// Nuevos
+export type EstadoDeceased = "en_proceso" | "completado" | "cancelado";
+export type TipoContabilidad = "ingreso" | "egreso";
+
+// ── Entidades existentes ──────────────────────────────────────
 export interface Cliente {
   id: string;
   nombre: string;
@@ -71,6 +81,8 @@ export interface Pago {
   tipo_pago: TipoPago;
   descripcion?: string;
   checkout_dias?: number;
+  fecha_vence?: string; // nuevo
+  insep_numero?: string; // nuevo
   created_at: string;
   cliente?: Cliente;
 }
@@ -97,6 +109,9 @@ export interface Convenio {
   servicios_usados: number;
   saldo_favor: number;
   activo: boolean;
+  cubre_traslado: boolean; // nuevo
+  cubre_tramite: boolean; // nuevo
+  cubre_pompas: boolean; // nuevo
   created_at: string;
   updated_at: string;
 }
@@ -119,3 +134,75 @@ export interface SuscripcionMP {
   created_at: string;
   updated_at: string;
 }
+
+// ── Nuevas entidades ──────────────────────────────────────────
+
+export interface DeceasedRecord {
+  id: string;
+  cliente_id?: string;
+  familiar_id?: string;
+  nombre_fallecido: string;
+  apellido_fallecido: string;
+  dni_fallecido?: string;
+  fecha_fallecimiento: string;
+  causa?: string;
+  convenio_id?: string;
+  cubre_traslado: boolean;
+  cubre_capilla: boolean;
+  cubre_sala: boolean;
+  cubre_tramite: boolean;
+  cubre_cremacion: boolean;
+  cubre_serv_calle: boolean;
+  estado: EstadoDeceased;
+  observaciones?: string;
+  created_at: string;
+  updated_at: string;
+  // joins opcionales
+  cliente?: Pick<Cliente, "id" | "nombre" | "apellido">;
+  convenio?: Pick<Convenio, "id" | "nombre">;
+}
+
+export interface PetCremation {
+  id: string;
+  duenio_nombre: string;
+  duenio_telefono: string;
+  duenio_dni?: string;
+  mascota_nombre: string;
+  mascota_especie: string;
+  mascota_raza?: string;
+  mascota_peso_kg?: number;
+  fecha: string;
+  monto: number;
+  metodo_pago: MetodoPago;
+  estado_pago: EstadoPago;
+  foto_url?: string;
+  certificado_url?: string;
+  observaciones?: string;
+  created_at: string;
+}
+
+export interface AccountingEntry {
+  id: string;
+  tipo: TipoContabilidad;
+  categoria: string;
+  descripcion?: string;
+  monto: number;
+  fecha: string;
+  comprobante_url?: string;
+  cliente_id?: string;
+  cerrado: boolean;
+  created_at: string;
+  cliente?: Pick<Cliente, "id" | "nombre" | "apellido">;
+}
+
+export interface ContractModification {
+  id: string;
+  cliente_id: string;
+  campo: string;
+  valor_anterior?: string;
+  valor_nuevo: string;
+  motivo?: string;
+  usuario_email?: string;
+  created_at: string;
+}
+
