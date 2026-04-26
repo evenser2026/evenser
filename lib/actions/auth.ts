@@ -15,7 +15,7 @@ export async function login(email: string, password: string) {
     return { error: error.message };
   }
 
-  redirect("/dashboard");
+  redirect("/admin/dashboard");
 }
 
 export async function logout() {

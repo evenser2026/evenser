@@ -27,15 +27,15 @@ type NavItem = {
 };
 
 const nav: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/clientes", label: "Clientes", icon: Users },
-  { href: "/pagos", label: "Pagos", icon: CreditCard },
-  { href: "/servicios", label: "Servicios", icon: Briefcase },
-  { href: "/convenios", label: "Convenios", icon: Handshake },
-  { href: "/fallecidos", label: "Fallecidos", icon: HeartPulse },
-  { href: "/mascotas", label: "Cremación mascotas", icon: PawPrint },
-  { href: "/contabilidad", label: "Contabilidad", icon: BookOpen },
-  { href: "/reportes", label: "Reportes", icon: BarChart3 },
+  { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/clientes", label: "Clientes", icon: Users },
+  { href: "/admin/pagos", label: "Pagos", icon: CreditCard },
+  { href: "/admin/servicios", label: "Servicios", icon: Briefcase },
+  { href: "/admin/convenios", label: "Convenios", icon: Handshake },
+  { href: "/admin/fallecidos", label: "Fallecidos", icon: HeartPulse },
+  { href: "/admin/mascotas", label: "Cremación mascotas", icon: PawPrint },
+  { href: "/admin/contabilidad", label: "Contabilidad", icon: BookOpen },
+  { href: "/admin/reportes", label: "Reportes", icon: BarChart3 },
 ];
 
 function NavLink({
@@ -73,7 +73,7 @@ export default function Sidebar() {
   const [open, setOpen] = useState(false);
 
   const isActive = (href: string) =>
-    href === "/dashboard"
+    href === "/admin/dashboard"
       ? pathname === href
       : pathname === href || pathname.startsWith(href + "/");
 
