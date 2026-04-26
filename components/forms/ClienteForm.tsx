@@ -5,11 +5,20 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   clienteSchema,
-  localidades,
   type ClienteInput,
 } from "@/lib/validations";
 import { FormField } from "@/components/ui";
 import type { Cliente } from "@/types";
+
+const DEFAULT_LOCALIDADES = [
+  "Col. Elisa",
+  "La Escondida",
+  "Tirol",
+  "La Verde",
+  "Colonias Unidas",
+  "Las Garcitas",
+  "Otra",
+] as const;
 
 interface Props {
   defaultValues?: Partial<Cliente>;
@@ -17,6 +26,7 @@ interface Props {
   onCancel?: () => void;
   loading?: boolean;
   submitLabel?: string;
+  localidades?: string[];
 }
 
 export default function ClienteForm({
@@ -25,8 +35,10 @@ export default function ClienteForm({
   onCancel,
   loading: externalLoading,
   submitLabel = "Guardar cliente",
+  localidades: localidadesProp,
 }: Props) {
   const [internalLoading, setInternalLoading] = useState(false);
+  const localidades = localidadesProp ?? DEFAULT_LOCALIDADES;
   const isLoading = externalLoading ?? internalLoading;
 
   const {
@@ -35,8 +47,6 @@ export default function ClienteForm({
     formState: { errors },
   } = useForm<ClienteInput>({
     resolver: zodResolver(clienteSchema),
-    // Inicializar cada campo explícitamente — evita que RHF pierda
-    // el valor del select cuando defaultValues es undefined o parcial
     defaultValues: {
       nombre: defaultValues?.nombre ?? "",
       apellido: defaultValues?.apellido ?? "",
@@ -108,11 +118,9 @@ export default function ClienteForm({
       </div>
 
       <FormField label="Localidad" error={errors.localidad?.message} required>
-        {/* select nativo directamente — el componente Select wrapper
-            puede perder la ref en algunos casos con RHF */}
         <select {...register("localidad")} className="input">
           <option value="">Seleccionar...</option>
-          {localidades.map((l) => (
+          {(localidades ?? DEFAULT_LOCALIDADES).map((l) => (
             <option key={l} value={l}>
               {l}
             </option>

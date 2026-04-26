@@ -10,14 +10,14 @@ ctx.addEventListener("push", (event: PushEvent) => {
       body: data.body ?? "",
       icon: "/icons/icon-192.png",
       badge: "/icons/icon-192.png",
-      data: { url: data.url ?? "/dashboard" },
+      data: { url: data.url ?? "/admin/dashboard" },
     }),
   );
 });
 
 ctx.addEventListener("notificationclick", (event: NotificationEvent) => {
   event.notification.close();
-  const url = event.notification.data?.url ?? "/dashboard";
+  const url = event.notification.data?.url ?? "/admin/dashboard";
   event.waitUntil(
     ctx.clients
       .matchAll({ type: "window", includeUncontrolled: true })

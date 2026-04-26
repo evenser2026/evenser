@@ -31,7 +31,7 @@ export async function createCliente(input: ClienteInput) {
   const supabase = createClient()
   const { error } = await supabase.from('clients').insert(input)
   if (error) return { error: error.message }
-  revalidatePath('/clientes')
+  revalidatePath('/admin/clientes')
   return { success: true }
 }
 
@@ -39,8 +39,8 @@ export async function updateCliente(id: string, input: ClienteInput) {
   const supabase = createClient()
   const { error } = await supabase.from('clients').update(input).eq('id', id)
   if (error) return { error: error.message }
-  revalidatePath('/clientes')
-  revalidatePath(`/clientes/${id}`)
+  revalidatePath('/admin/clientes')
+  revalidatePath(`/admin/clientes/${id}`)
   return { success: true }
 }
 
@@ -48,6 +48,6 @@ export async function deleteCliente(id: string) {
   const supabase = createClient()
   const { error } = await supabase.from('clients').update({ activo: false }).eq('id', id)
   if (error) return { error: error.message }
-  revalidatePath('/clientes')
+  revalidatePath('/admin/clientes')
   return { success: true }
 }

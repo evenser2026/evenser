@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { enviarNotificacion } from "@/lib/actions/push";
 
 export async function POST(request: NextRequest) {
   try {
@@ -54,6 +55,13 @@ export async function POST(request: NextRequest) {
     }
 
     const clienteId = cliente!.id;
+
+    // Notificar nuevo afiliado
+    await enviarNotificacion({
+      titulo: "🆕 Nuevo afiliado",
+      cuerpo: `${nombre} ${apellido} se registró desde la web`,
+      url: `/admin/clientes/${clienteId}`,
+    });
 
     // 2. Monto según obra social
     const monto = obra_social && obra_social.trim() !== "" ? 20000 : 25000;

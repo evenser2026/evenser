@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
         currency_id: "ARS",
       },
       payer_email: emailCliente,
-      back_url: `${process.env.NEXT_PUBLIC_APP_URL}/clientes/${clienteId}`,
+      back_url: `${process.env.NEXT_PUBLIC_APP_URL}/admin/clientes/${clienteId}`,
       status: "pending",
     };
 

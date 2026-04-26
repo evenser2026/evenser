@@ -155,7 +155,7 @@ export default async function MorosidadPage() {
                       </td>
                       <td>
                         <Link
-                          href={`/clientes/${cliente.id}`}
+                          href={`/admin/clientes/${cliente.id}`}
                           className="text-xs text-brand-700 hover:underline font-medium"
                         >
                           Ver ficha

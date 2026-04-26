@@ -10,7 +10,7 @@ export async function createFamiliar(clienteId: string, input: FamiliarInput) {
     .from("family_members")
     .insert({ ...input, cliente_id: clienteId });
   if (error) return { error: error.message };
-  revalidatePath(`/clientes/${clienteId}`);
+  revalidatePath(`/admin/clientes/${clienteId}`);
   return { success: true };
 }
 
@@ -32,7 +32,7 @@ export async function deleteFamiliar(id: string, clienteId?: string) {
   if (error) return { error: error.message };
 
   if (resolvedClienteId) {
-    revalidatePath(`/clientes/${resolvedClienteId}`);
+    revalidatePath(`/admin/clientes/${resolvedClienteId}`);
   }
 
   return { success: true };

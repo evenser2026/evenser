@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { getAppConfig } from "@/lib/actions/config";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 const servicios = [
@@ -200,10 +201,17 @@ function FormAfiliacion({ onClose }: { onClose: () => void }) {
   const [initPoint, setInitPoint] = useState("");
   const [montoFinal, setMontoFinal] = useState(0);
   const [apiError, setApiError] = useState("");
+  const [localidades, setLocalidadList] = useState<string[]>([]);
   const [form, setForm] = useState({
     nombre: "", apellido: "", dni: "", telefono: "", email: "",
     ocupacion: "", obra_social: "", localidad: "", carpeta_nacimiento: "",
   });
+
+  useEffect(() => {
+    getAppConfig().then((config) => {
+      setLocalidadList(config.localidades.filter((l) => l.activo).map((l) => l.nombre));
+    });
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));

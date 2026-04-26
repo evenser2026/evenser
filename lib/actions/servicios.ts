@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { enviarNotificacion } from '@/lib/actions/push'
 
 export type ServicioInput = {
   cliente_id: string
@@ -68,8 +69,24 @@ export async function createServicio(input: ServicioInput) {
     return { error: error.message }
   }
 
-  revalidatePath('/dashboard')
-  revalidatePath('/servicios')
+  revalidatePath('/admin/dashboard')
+  revalidatePath('/admin/servicios')
+
+  const tipoLabels: Record<string, string> = {
+    traslado: "traslado",
+    servicios_de_calle: "servicios de calle",
+    capilla_ardiente: "capilla ardiente",
+    servicio_de_sala: "servicio de sala",
+    tramite_registro: "trámite registro",
+    cremacion: "cremación",
+  }
+
+  await enviarNotificacion({
+    titulo: "⚰️ Nuevo servicio",
+    cuerpo: `Se registró un nuevo servicio: ${tipoLabels[input.tipo] ?? input.tipo}`,
+    url: `/admin/clientes/${input.cliente_id}`,
+    clienteId: input.cliente_id,
+  })
 
   return { success: true }
 }
@@ -94,8 +111,8 @@ export async function updateServicio(id: string, input: Partial<ServicioInput>) 
     return { error: error.message }
   }
 
-  revalidatePath('/dashboard')
-  revalidatePath('/servicios')
+  revalidatePath('/admin/dashboard')
+  revalidatePath('/admin/servicios')
 
   return { success: true }
 }
@@ -109,8 +126,8 @@ export async function deleteServicio(id: string) {
     return { error: error.message }
   }
 
-  revalidatePath('/dashboard')
-  revalidatePath('/servicios')
+  revalidatePath('/admin/dashboard')
+  revalidatePath('/admin/servicios')
 
   return { success: true }
 }

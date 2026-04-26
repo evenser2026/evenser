@@ -19,8 +19,8 @@ export async function createPago(input: PagoInput) {
   const supabase = createClient()
   const { error } = await supabase.from('payments').insert(input)
   if (error) return { error: error.message }
-  revalidatePath('/pagos')
-  revalidatePath(`/clientes/${input.cliente_id}`)
+  revalidatePath('/admin/pagos')
+  revalidatePath(`/admin/clientes/${input.cliente_id}`)
   return { success: true }
 }
 
@@ -28,7 +28,7 @@ export async function updateEstadoPago(id: string, estado: string) {
   const supabase = createClient()
   const { error } = await supabase.from('payments').update({ estado }).eq('id', id)
   if (error) return { error: error.message }
-  revalidatePath('/pagos')
+  revalidatePath('/admin/pagos')
   return { success: true }
 }
 
@@ -36,7 +36,7 @@ export async function deletePago(id: string) {
   const supabase = createClient()
   const { error } = await supabase.from('payments').delete().eq('id', id)
   if (error) return { error: error.message }
-  revalidatePath('/pagos')
+  revalidatePath('/admin/pagos')
   return { success: true }
 }
 

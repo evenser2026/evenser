@@ -84,7 +84,7 @@ async function handlePago(pagoId: string) {
   await enviarNotificacion({
     titulo: "💳 Pago recibido",
     cuerpo: `Se registró un pago de $${pago.transaction_amount}`,
-    url: `/clientes/${suscripcion.cliente_id}`,
+    url: `/admin/clientes/${suscripcion.cliente_id}`,
     clienteId: suscripcion.cliente_id,
   });
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { getAppConfig, updateAppConfig } from "@/lib/actions/config";
+import { getAppConfig, saveLocalidad, toggleLocalidad, deleteLocalidad, updateAppConfig } from "@/lib/actions/config";
 import type { AppConfig } from "@/lib/actions/config";
 import {
   Settings,
@@ -12,6 +12,11 @@ import {
   Clock,
   Save,
   Bell,
+  MapPin,
+  Plus,
+  Trash2,
+  ToggleLeft,
+  ToggleRight,
 } from "lucide-react";
 import { FormField } from "@/components/ui";
 import PushNotifications from "@/components/PushNotifications";
@@ -21,6 +26,9 @@ export default function ConfiguracionPage() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [isPending, start] = useTransition();
+  const [newLocalidad, setNewLocalidad] = useState("");
+  const [localidadError, setLocalidadError] = useState("");
+  const [localidadLoading, setLocalidadLoading] = useState(false);
 
   useEffect(() => {
     getAppConfig().then(setConfig);
@@ -49,6 +57,44 @@ export default function ConfiguracionPage() {
       }
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
+    });
+  };
+
+  const handleAddLocalidad = () => {
+    if (!newLocalidad.trim()) {
+      setLocalidadError("Ingresá un nombre");
+      return;
+    }
+    setLocalidadError("");
+    setLocalidadLoading(true);
+    start(async () => {
+      const res = await saveLocalidad(newLocalidad);
+      if (res?.error) {
+        setLocalidadError(res.error);
+        setLocalidadLoading(false);
+        return;
+      }
+      setNewLocalidad("");
+      await getAppConfig().then((c) => { if (c) setConfig({ ...c, localidades: c.localidades }); });
+      setLocalidadLoading(false);
+    });
+  };
+
+  const handleToggleLocalidad = (id: string) => {
+    setLocalidadLoading(true);
+    start(async () => {
+      await toggleLocalidad(id);
+      await getAppConfig().then((c) => { if (c) setConfig({ ...c, localidades: c.localidades }); });
+      setLocalidadLoading(false);
+    });
+  };
+
+  const handleDeleteLocalidad = (id: string) => {
+    setLocalidadLoading(true);
+    start(async () => {
+      await deleteLocalidad(id);
+      await getAppConfig().then((c) => { if (c) setConfig({ ...c, localidades: c.localidades }); });
+      setLocalidadLoading(false);
     });
   };
 
@@ -238,6 +284,70 @@ export default function ConfiguracionPage() {
               </p>
             </div>
             <PushNotifications />
+          </div>
+        </div>
+
+        {/* Localidades */}
+        <div className="card p-6">
+          <div className="flex items-center gap-2 mb-5 pb-3 border-b border-gray-100">
+            <MapPin size={18} className="text-brand-700" />
+            <h2 className="font-semibold text-gray-900">Localidades</h2>
+          </div>
+          <p className="text-sm text-gray-500 mb-4">
+            Agregá o desactivá las localidades donde se prestan servicios. Las activas aparecen en los selects de clientes.
+          </p>
+
+          <div className="flex gap-2 mb-4">
+            <input
+              type="text"
+              value={newLocalidad}
+              onChange={(e) => setNewLocalidad(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleAddLocalidad()}
+              placeholder="Nueva localidad..."
+              className="input flex-1"
+            />
+            <button
+              onClick={handleAddLocalidad}
+              disabled={localidadLoading}
+              className="btn-primary flex items-center gap-1.5"
+            >
+              <Plus size={14} />
+              Agregar
+            </button>
+          </div>
+          {localidadError && (
+            <p className="text-xs text-red-500 mb-3">{localidadError}</p>
+          )}
+
+          <div className="space-y-2">
+            {config.localidades.map((loc) => (
+              <div key={loc.id} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
+                <span className={`text-sm ${loc.activo ? "text-gray-800" : "text-gray-400 line-through"}`}>
+                  {loc.nombre}
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleToggleLocalidad(loc.id)}
+                    disabled={localidadLoading}
+                    className="text-gray-400 hover:text-gray-600"
+                    title={loc.activo ? "Desactivar" : "Activar"}
+                  >
+                    {loc.activo
+                      ? <ToggleRight size={20} className="text-green-600" />
+                      : <ToggleLeft size={20} />
+                    }
+                  </button>
+                  <button
+                    onClick={() => handleDeleteLocalidad(loc.id)}
+                    disabled={localidadLoading}
+                    className="text-gray-400 hover:text-red-500"
+                    title="Eliminar"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

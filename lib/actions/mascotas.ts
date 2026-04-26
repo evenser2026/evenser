@@ -26,7 +26,7 @@ export async function createPetCremation(
     foto_url: foto_url ?? null,
   });
   if (error) return { error: error.message };
-  revalidatePath("/mascotas");
+  revalidatePath("/admin/mascotas");
   return { success: true };
 }
 
@@ -40,7 +40,7 @@ export async function updatePetCremation(
     .update(input)
     .eq("id", id);
   if (error) return { error: error.message };
-  revalidatePath("/mascotas");
+  revalidatePath("/admin/mascotas");
   return { success: true };
 }
 
@@ -48,6 +48,6 @@ export async function deletePetCremation(id: string) {
   const supabase = createClient();
   const { error } = await supabase.from("pet_cremations").delete().eq("id", id);
   if (error) return { error: error.message };
-  revalidatePath("/mascotas");
+  revalidatePath("/admin/mascotas");
   return { success: true };
 }

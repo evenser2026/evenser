@@ -6,15 +6,16 @@ import { useRouter } from "next/navigation";
 import { createCliente, deleteCliente } from "@/lib/actions/clientes";
 import { Modal, Badge, EmptyState, ConfirmDialog } from "@/components/ui";
 import ClienteForm from "@/components/forms/ClienteForm";
-import { localidades } from "@/lib/validations";
 import type { Cliente } from "@/types";
 import type { ClienteInput } from "@/lib/validations";
 import { Plus, Search, Eye, Trash2 } from "lucide-react";
 
 export default function ClientesView({
   initialClientes,
+  localidades,
 }: {
   initialClientes: Cliente[];
+  localidades?: string[];
 }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
@@ -97,7 +98,7 @@ export default function ClientesView({
           className="input sm:w-48"
         >
           <option value="">Todas las localidades</option>
-          {localidades.map((l) => (
+          {(localidades ?? ["Col. Elisa","La Escondida","Tirol","La Verde","Colonias Unidas","Las Garcitas","Otra"]).map((l) => (
             <option key={l} value={l}>
               {l}
             </option>
@@ -144,7 +145,7 @@ export default function ClientesView({
                     <td>
                       <div className="flex items-center gap-2">
                         <Link
-                          href={`/clientes/${c.id}`}
+                          href={`/admin/clientes/${c.id}`}
                           className="text-brand-700 hover:text-brand-900"
                           title="Ver detalle"
                         >
@@ -187,6 +188,7 @@ export default function ClientesView({
             setModal(false);
             setError("");
           }}
+          localidades={localidades}
         />
       </Modal>
 

@@ -50,7 +50,7 @@ export async function desuscribirPush(endpoint: string) {
 export async function enviarNotificacion({
   titulo,
   cuerpo,
-  url = "/dashboard",
+  url = "/admin/dashboard",
   clienteId,
 }: {
   titulo: string;

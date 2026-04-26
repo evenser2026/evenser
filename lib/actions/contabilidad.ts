@@ -45,7 +45,7 @@ export async function createAccountingEntry(
     comprobante_url: comprobante_url ?? null,
   });
   if (error) return { error: error.message };
-  revalidatePath("/contabilidad");
+  revalidatePath("/admin/contabilidad");
   return { success: true };
 }
 
@@ -56,7 +56,7 @@ export async function deleteAccountingEntry(id: string) {
     .delete()
     .eq("id", id);
   if (error) return { error: error.message };
-  revalidatePath("/contabilidad");
+  revalidatePath("/admin/contabilidad");
   return { success: true };
 }
 
@@ -71,6 +71,6 @@ export async function cerrarMesContable(mes: number, anio: number) {
     .lt("fecha", fin)
     .eq("cerrado", false);
   if (error) return { error: error.message };
-  revalidatePath("/contabilidad");
+  revalidatePath("/admin/contabilidad");
   return { success: true };
 }

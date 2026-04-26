@@ -20,7 +20,7 @@ export async function createConvenio(input: ConvenioInput) {
     servicios_usados: 0,
   })
   if (error) return { error: error.message }
-  revalidatePath('/convenios')
+  revalidatePath('/admin/convenios')
   return { success: true }
 }
 
@@ -28,7 +28,7 @@ export async function updateConvenio(id: string, input: Partial<ConvenioInput>) 
   const supabase = createClient()
   const { error } = await supabase.from('agreements').update(input).eq('id', id)
   if (error) return { error: error.message }
-  revalidatePath('/convenios')
+  revalidatePath('/admin/convenios')
   return { success: true }
 }
 
@@ -36,6 +36,6 @@ export async function toggleConvenioActivo(id: string, activo: boolean) {
   const supabase = createClient()
   const { error } = await supabase.from('agreements').update({ activo }).eq('id', id)
   if (error) return { error: error.message }
-  revalidatePath('/convenios')
+  revalidatePath('/admin/convenios')
   return { success: true }
 }

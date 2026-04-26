@@ -129,10 +129,10 @@ export default function Sidebar() {
 
         <div className="p-4 border-t border-gray-100 space-y-1">
           <NavLink
-            href="/configuracion"
+            href="/admin/configuracion"
             label="Configuración"
             icon={Settings}
-            active={pathname === "/configuracion"}
+            active={pathname === "/admin/configuracion"}
             onClick={() => setOpen(false)}
           />
           <form action={logout}>

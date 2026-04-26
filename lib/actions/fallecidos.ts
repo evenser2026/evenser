@@ -49,8 +49,8 @@ export async function createDeceased(input: DeceasedInput) {
     .from("deceased_records")
     .insert(cleanNullable(input));
   if (error) return { error: error.message };
-  revalidatePath("/fallecidos");
-  if (input.cliente_id) revalidatePath(`/clientes/${input.cliente_id}`);
+  revalidatePath("/admin/fallecidos");
+  if (input.cliente_id) revalidatePath(`/admin/clientes/${input.cliente_id}`);
   return { success: true };
 }
 
@@ -64,7 +64,7 @@ export async function updateDeceased(
     .update(input)
     .eq("id", id);
   if (error) return { error: error.message };
-  revalidatePath("/fallecidos");
+  revalidatePath("/admin/fallecidos");
   return { success: true };
 }
 
@@ -78,6 +78,6 @@ export async function updateDeceasedEstado(
     .update({ estado })
     .eq("id", id);
   if (error) return { error: error.message };
-  revalidatePath("/fallecidos");
+  revalidatePath("/admin/fallecidos");
   return { success: true };
 }
