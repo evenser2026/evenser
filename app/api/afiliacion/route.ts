@@ -68,10 +68,13 @@ export async function POST(request: NextRequest) {
       .from("app_config")
       .select("clave, valor")
       .in("clave", ["monto_con_obra_social", "monto_sin_obra_social"]);
-    const configMap = Object.fromEntries((configData ?? []).map((r: any) => [r.clave, r.valor]));
+    const configMap = Object.fromEntries(
+      (configData ?? []).map((r: any) => [r.clave, r.valor]),
+    );
     const montoConObra = Number(configMap.monto_con_obra_social ?? 20000);
     const montoSinObra = Number(configMap.monto_sin_obra_social ?? 25000);
-    const monto = obra_social && obra_social.trim() !== "" ? montoConObra : montoSinObra;
+    const monto =
+      obra_social && obra_social.trim() !== "" ? montoConObra : montoSinObra;
 
     // 3. Verificar ACCESS_TOKEN
     const accessToken = process.env.MP_ACCESS_TOKEN;
@@ -83,6 +86,12 @@ export async function POST(request: NextRequest) {
     const appUrl =
       process.env.NEXT_PUBLIC_APP_URL || "https://evenser.vercel.app";
 
+    const isTesting = accessToken.startsWith("TEST-");
+    const payerEmail = isTesting
+      ? (process.env.MP_TEST_PAYER_EMAIL ??
+        "TESTUSER8746695382589969460@testuser.com")
+      : email;
+
     const mpPayload = {
       reason: `Cuota mensual Evenser - ${apellido}, ${nombre}`,
       auto_recurring: {
@@ -91,24 +100,24 @@ export async function POST(request: NextRequest) {
         transaction_amount: monto,
         currency_id: "ARS",
       },
-      payer_email: email,
+      payer_email: payerEmail,
       back_url: `${appUrl}/?afiliado=ok`,
       status: "pending",
     };
 
-    console.log("[Afiliación] Llamando MP para:", email, "monto:", monto);
+    console.log("[Afiliación] Llamando MP para:", payerEmail, "monto:", monto);
+    console.log("[Afiliación] Modo:", isTesting ? "TEST" : "PRODUCCIÓN");
+    console.log("[MP Payload]", JSON.stringify(mpPayload, null, 2));
+    console.log("[MP Token]", accessToken?.substring(0, 30) + "...");
 
-    const headers: HeadersInit = {
+    const mpRes = await fetch("https://api.mercadopago.com/preapproval", {
+      method: "POST",
+      headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
-        ...(process.env.NODE_ENV !== "production" && { "X-scope": "stage" }),
-      };
-
-      const mpRes = await fetch("https://api.mercadopago.com/preapproval", {
-        method: "POST",
-        headers,
-        body: JSON.stringify(mpPayload),
-      });
+      },
+      body: JSON.stringify(mpPayload),
+    });
 
     const mpData = await mpRes.json();
 
@@ -116,10 +125,8 @@ export async function POST(request: NextRequest) {
       console.error(
         "[Afiliación] MP rechazó:",
         mpRes.status,
-        mpData.message,
-        JSON.stringify(mpData.cause),
+        JSON.stringify(mpData, null, 2),
       );
-      // Cliente registrado — fallback contacto manual
       return NextResponse.json({
         success: true,
         clienteId,
@@ -129,28 +136,22 @@ export async function POST(request: NextRequest) {
     }
 
     console.log("[Afiliación] MP OK, id:", mpData.id);
-
-    const isProd = process.env.NODE_ENV === "production";
-    const checkoutUrl = isProd
-      ? mpData.init_point
-      : mpData.sandbox_init_point ?? mpData.init_point;
-
     console.log("[MP Response]", JSON.stringify(mpData, null, 2));
-    console.log("[Checkout URL]", checkoutUrl);
+    console.log("[Checkout URL]", mpData.init_point);
 
-    // 5. Guardar suscripción en DB
+    // 4. Guardar suscripción en DB
     await supabase.from("suscripciones_mp").insert({
       cliente_id: clienteId,
       mp_preapproval_id: mpData.id,
       monto,
       estado: "pendiente",
-      init_point: checkoutUrl,
+      init_point: mpData.init_point,
     });
 
     return NextResponse.json({
       success: true,
       clienteId,
-      init_point: checkoutUrl,
+      init_point: mpData.init_point,
       monto,
     });
   } catch (err: any) {
