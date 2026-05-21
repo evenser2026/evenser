@@ -57,17 +57,51 @@ async function handlePago(pagoId: string) {
     return;
   }
 
-  // Registrar el pago en la DB
-  await supabase.from("payments").insert({
-    cliente_id: suscripcion.cliente_id,
-    monto: pago.transaction_amount || suscripcion.monto,
-    fecha: new Date().toISOString().split("T")[0],
-    metodo_pago: "mercado_pago",
-    estado: "pagado",
-    tipo_pago: "mensual",
-    descripcion: `Pago automático MP - ID: ${pagoId}`,
-    checkout_dias: 35,
-  });
+  const montoFinal = pago.transaction_amount || suscripcion.monto;
+  const fechaHoy = new Date().toISOString().split("T")[0];
+
+  // Registrar el pago en payments y recuperar el id generado
+  const { data: nuevoPago, error: errorPago } = await supabase
+    .from("payments")
+    .insert({
+      cliente_id: suscripcion.cliente_id,
+      monto: montoFinal,
+      fecha: fechaHoy,
+      metodo_pago: "mercado_pago",
+      estado: "pagado",
+      tipo_pago: "mensual",
+      descripcion: `Pago automático MP - ID: ${pagoId}`,
+      checkout_dias: 35,
+    })
+    .select("id")
+    .single();
+
+  if (errorPago) {
+    console.error("[MP Webhook] Error al insertar payment:", errorPago);
+    return;
+  }
+
+  // ✅ Registrar en contabilidad vinculado al pago
+  if (nuevoPago) {
+    const { error: errorContabilidad } = await supabase
+      .from("accounting_entries")
+      .insert({
+        tipo: "ingreso",
+        categoria: "cuota_mensual",
+        monto: montoFinal,
+        fecha: fechaHoy,
+        descripcion: `Cuota mensual MP - ID: ${pagoId}`,
+        cliente_id: suscripcion.cliente_id,
+        pago_id: nuevoPago.id,
+      });
+
+    if (errorContabilidad) {
+      console.error(
+        "[MP Webhook] Error al insertar en contabilidad:",
+        errorContabilidad,
+      );
+    }
+  }
 
   // Actualizar estado de la suscripción
   await supabase
@@ -80,10 +114,10 @@ async function handlePago(pagoId: string) {
     suscripcion.cliente_id,
   );
 
-  // ✅ Notificar DESPUÉS de registrar todo correctamente
+  // Notificar después de registrar todo correctamente
   await enviarNotificacion({
     titulo: "💳 Pago recibido",
-    cuerpo: `Se registró un pago de $${pago.transaction_amount}`,
+    cuerpo: `Se registró un pago de $${montoFinal}`,
     url: `/admin/clientes/${suscripcion.cliente_id}`,
     clienteId: suscripcion.cliente_id,
   });
