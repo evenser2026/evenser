@@ -57,16 +57,6 @@ const testimonios = [
   },
 ];
 
-const localidades = [
-  "Col. Elisa",
-  "La Escondida",
-  "Tirol",
-  "La Verde",
-  "Colonias Unidas",
-  "Las Garcitas",
-  "Otra",
-];
-
 // ─── Cláusulas del contrato ───────────────────────────────────────────────────
 const clausulas = [
   {
@@ -146,6 +136,26 @@ const clausulas = [
 // ─── Nav ─────────────────────────────────────────────────────────────────────
 function Nav({ onAfiliarse }: { onAfiliarse: () => void }) {
   const [open, setOpen] = useState(false);
+  const [canInstall, setCanInstall] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      (window as any).deferredPrompt = e;
+      setCanInstall(true);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const handleInstall = async () => {
+    const evt = (window as any).deferredPrompt;
+    if (!evt) return;
+    evt.prompt();
+    const { outcome } = await evt.userChoice;
+    if (outcome === "accepted") setCanInstall(false);
+    (window as any).deferredPrompt = null;
+  };
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100 shadow-sm">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -169,6 +179,16 @@ function Nav({ onAfiliarse }: { onAfiliarse: () => void }) {
           >
             Afiliarme
           </button>
+          {canInstall && (
+            <button
+              onClick={handleInstall}
+              className="border border-stone-300 text-stone-700 text-sm px-4 py-2 rounded-lg hover:bg-stone-50 transition-colors font-medium flex items-center gap-1.5"
+              title="Instalar app en tu dispositivo"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Instalar app
+            </button>
+          )}
         </div>
         <button onClick={() => setOpen(!open)} className="md:hidden p-2 rounded-lg hover:bg-gray-100">
           <div className="w-5 h-0.5 bg-gray-700 mb-1" />
@@ -188,6 +208,15 @@ function Nav({ onAfiliarse }: { onAfiliarse: () => void }) {
           >
             Afiliarme
           </button>
+          {canInstall && (
+            <button
+              onClick={() => { setOpen(false); handleInstall(); }}
+              className="w-full border border-stone-300 text-stone-700 text-sm px-4 py-2.5 rounded-lg font-medium flex items-center justify-center gap-1.5"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Instalar app
+            </button>
+          )}
         </div>
       )}
     </nav>
@@ -195,7 +224,7 @@ function Nav({ onAfiliarse }: { onAfiliarse: () => void }) {
 }
 
 // ─── Formulario de afiliación ─────────────────────────────────────────────────
-function FormAfiliacion({ onClose }: { onClose: () => void }) {
+function FormAfiliacion({ onClose, montoConObra, montoSinObra }: { onClose: () => void; montoConObra: number; montoSinObra: number }) {
   const [step, setStep] = useState<"form" | "pago" | "success">("form");
   const [loading, setLoading] = useState(false);
   const [initPoint, setInitPoint] = useState("");
@@ -247,7 +276,7 @@ function FormAfiliacion({ onClose }: { onClose: () => void }) {
         <p className="text-2xl font-bold text-stone-900 mb-1">
           ${montoFinal.toLocaleString("es-AR")}<span className="text-base font-normal text-gray-500">/mes</span>
         </p>
-        <p className="text-xs text-gray-400 mb-6">{montoFinal === 20000 ? "Plan con obra social" : "Plan sin obra social"}</p>
+        <p className="text-xs text-gray-400 mb-6">{montoFinal === montoConObra ? "Plan con obra social" : "Plan sin obra social"}</p>
         <a href={initPoint} target="_blank" rel="noopener noreferrer"
           className="block w-full bg-stone-800 text-white py-3.5 rounded-xl font-bold text-sm hover:bg-stone-900 transition-colors mb-3">
           💳 Pagar con Mercado Pago
@@ -285,7 +314,7 @@ function FormAfiliacion({ onClose }: { onClose: () => void }) {
     );
   }
 
-  const montoPreview = form.obra_social && form.obra_social.trim() !== "" ? 20000 : 25000;
+  const montoPreview = form.obra_social && form.obra_social.trim() !== "" ? montoConObra : montoSinObra;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -358,7 +387,7 @@ function FormAfiliacion({ onClose }: { onClose: () => void }) {
 }
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
-function Modal({ open, onClose }: { open: boolean; onClose: () => void }) {
+function Modal({ open, onClose, montoConObra, montoSinObra }: { open: boolean; onClose: () => void; montoConObra: number; montoSinObra: number }) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -372,7 +401,7 @@ function Modal({ open, onClose }: { open: boolean; onClose: () => void }) {
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
         </div>
         <div className="p-6">
-          <FormAfiliacion onClose={onClose} />
+          <FormAfiliacion onClose={onClose} montoConObra={montoConObra} montoSinObra={montoSinObra} />
         </div>
       </div>
     </div>
@@ -517,6 +546,15 @@ function SeccionContrato({ onAfiliarse }: { onAfiliarse: () => void }) {
 export default function LandingPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
+  const [montoConObra, setMontoConObra] = useState(20000);
+  const [montoSinObra, setMontoSinObra] = useState(25000);
+
+  useEffect(() => {
+    getAppConfig().then((config) => {
+      setMontoConObra(config.monto_con_obra_social);
+      setMontoSinObra(config.monto_sin_obra_social);
+    });
+  }, []);
 
   return (
     <div className="min-h-screen bg-white font-sans">
@@ -612,7 +650,7 @@ export default function LandingPage() {
                 <h3 className="font-bold text-white text-lg">Con obra social</h3>
                 <span className="bg-green-900 text-green-300 text-xs px-2.5 py-1 rounded-full">Descuento</span>
               </div>
-              <p className="text-4xl font-bold text-white mb-1">$20.000<span className="text-xl font-normal text-stone-400">/mes</span></p>
+              <p className="text-4xl font-bold text-white mb-1">${montoConObra.toLocaleString("es-AR")}<span className="text-xl font-normal text-stone-400">/mes</span></p>
               <p className="text-stone-400 text-sm mb-6">Para afiliados con cobertura médica</p>
               <ul className="space-y-2 mb-8">
                 {["Servicio de sala y calle", "Traslado incluido", "Trámites ante registro civil", "Cafetería", "Accesorios funerarios"].map((i) => (
@@ -632,7 +670,7 @@ export default function LandingPage() {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-bold text-gray-900 text-lg">Sin obra social</h3>
               </div>
-              <p className="text-4xl font-bold text-gray-900 mb-1">$25.000<span className="text-xl font-normal text-gray-400">/mes</span></p>
+              <p className="text-4xl font-bold text-gray-900 mb-1">${montoSinObra.toLocaleString("es-AR")}<span className="text-xl font-normal text-gray-400">/mes</span></p>
               <p className="text-gray-500 text-sm mb-6">Cobertura completa sin requisitos</p>
               <ul className="space-y-2 mb-8">
                 {["Servicio de sala y calle", "Traslado incluido", "Trámites ante registro civil", "Cafetería", "Accesorios funerarios"].map((i) => (
@@ -741,7 +779,7 @@ export default function LandingPage() {
         </div>
       </footer>
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} />
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} montoConObra={montoConObra} montoSinObra={montoSinObra} />
 
       {/* Lightbox */}
       {expandedImage && (

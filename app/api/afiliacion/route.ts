@@ -64,7 +64,14 @@ export async function POST(request: NextRequest) {
     });
 
     // 2. Monto según obra social
-    const monto = obra_social && obra_social.trim() !== "" ? 20000 : 25000;
+    const { data: configData } = await supabase
+      .from("app_config")
+      .select("clave, valor")
+      .in("clave", ["monto_con_obra_social", "monto_sin_obra_social"]);
+    const configMap = Object.fromEntries((configData ?? []).map((r: any) => [r.clave, r.valor]));
+    const montoConObra = Number(configMap.monto_con_obra_social ?? 20000);
+    const montoSinObra = Number(configMap.monto_sin_obra_social ?? 25000);
+    const monto = obra_social && obra_social.trim() !== "" ? montoConObra : montoSinObra;
 
     // 3. Verificar ACCESS_TOKEN
     const accessToken = process.env.MP_ACCESS_TOKEN;
@@ -76,7 +83,6 @@ export async function POST(request: NextRequest) {
     const appUrl =
       process.env.NEXT_PUBLIC_APP_URL || "https://evenser.vercel.app";
 
-    // 4. Crear suscripción MP con el email REAL del usuario
     const mpPayload = {
       reason: `Cuota mensual Evenser - ${apellido}, ${nombre}`,
       auto_recurring: {
@@ -85,21 +91,24 @@ export async function POST(request: NextRequest) {
         transaction_amount: monto,
         currency_id: "ARS",
       },
-      payer_email: email, // ← email real ingresado en el formulario
-      back_url: `${appUrl}/landing?afiliado=ok`,
+      payer_email: email,
+      back_url: `${appUrl}/?afiliado=ok`,
       status: "pending",
     };
 
     console.log("[Afiliación] Llamando MP para:", email, "monto:", monto);
 
-    const mpRes = await fetch("https://api.mercadopago.com/preapproval", {
-      method: "POST",
-      headers: {
+    const headers: HeadersInit = {
         "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify(mpPayload),
-    });
+        ...(process.env.NODE_ENV !== "production" && { "X-scope": "stage" }),
+      };
+
+      const mpRes = await fetch("https://api.mercadopago.com/preapproval", {
+        method: "POST",
+        headers,
+        body: JSON.stringify(mpPayload),
+      });
 
     const mpData = await mpRes.json();
 
@@ -121,19 +130,27 @@ export async function POST(request: NextRequest) {
 
     console.log("[Afiliación] MP OK, id:", mpData.id);
 
+    const isProd = process.env.NODE_ENV === "production";
+    const checkoutUrl = isProd
+      ? mpData.init_point
+      : mpData.sandbox_init_point ?? mpData.init_point;
+
+    console.log("[MP Response]", JSON.stringify(mpData, null, 2));
+    console.log("[Checkout URL]", checkoutUrl);
+
     // 5. Guardar suscripción en DB
     await supabase.from("suscripciones_mp").insert({
       cliente_id: clienteId,
       mp_preapproval_id: mpData.id,
       monto,
       estado: "pendiente",
-      init_point: mpData.init_point,
+      init_point: checkoutUrl,
     });
 
     return NextResponse.json({
       success: true,
       clienteId,
-      init_point: mpData.init_point,
+      init_point: checkoutUrl,
       monto,
     });
   } catch (err: any) {

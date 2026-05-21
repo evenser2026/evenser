@@ -4,10 +4,11 @@ const withPWA = require("next-pwa")({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === "development",
-  customWorkerDir: "worker", // ← agregar esto
+  customWorkerDir: "worker",
 });
 
 const nextConfig = {
+  allowedDevOrigins: ["evenser.vercel.app"],
   images: {
     remotePatterns: [
       {

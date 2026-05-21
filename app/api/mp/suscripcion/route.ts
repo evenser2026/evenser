@@ -32,14 +32,17 @@ export async function POST(request: NextRequest) {
       status: "pending",
     };
 
-    const response = await fetch("https://api.mercadopago.com/preapproval", {
-      method: "POST",
-      headers: {
+    const headers: HeadersInit = {
         "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify(body),
-    });
+        ...(process.env.NODE_ENV !== "production" && { "X-scope": "stage" }),
+      };
+
+      const response = await fetch("https://api.mercadopago.com/preapproval", {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+      });
 
     const data = await response.json();
 
@@ -51,6 +54,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const isProd = process.env.NODE_ENV === "production";
+    const checkoutUrl = isProd ? data.init_point : data.sandbox_init_point;
+
     // Guardar referencia de la suscripción en Supabase
     const supabase = createClient();
     await supabase.from("suscripciones_mp").insert({
@@ -58,12 +64,12 @@ export async function POST(request: NextRequest) {
       mp_preapproval_id: data.id,
       monto: Number(monto),
       estado: "pendiente",
-      init_point: data.init_point,
+      init_point: checkoutUrl,
     });
 
     return NextResponse.json({
       id: data.id,
-      init_point: data.init_point, // URL que se manda al cliente
+      init_point: checkoutUrl,
     });
   } catch (error) {
     console.error("Error crear suscripción:", error);
