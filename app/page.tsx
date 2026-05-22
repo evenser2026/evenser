@@ -865,17 +865,25 @@ function SeccionContrato({ onAfiliarse }: { onAfiliarse: () => void }) {
 }
 
 // ─── Main Landing ─────────────────────────────────────────────────────────────
+// DESPUÉS
 export default function LandingPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
   const [montoConObra, setMontoConObra] = useState(20000);
   const [montoSinObra, setMontoSinObra] = useState(25000);
+  const [afiliacionExitosa, setAfiliacionExitosa] = useState(false);
 
   useEffect(() => {
     getAppConfig().then((config) => {
       setMontoConObra(config.monto_con_obra_social);
       setMontoSinObra(config.monto_sin_obra_social);
     });
+    // Detectar retorno desde MP con pago exitoso
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("afiliado") === "ok") {
+      setAfiliacionExitosa(true);
+      window.history.replaceState({}, "", "/");
+    }
   }, []);
 
   return (
@@ -1281,6 +1289,47 @@ export default function LandingPage() {
           </p>
         </div>
       )}
+
+      {/* Modal bienvenida post-pago */}
+      {afiliacionExitosa && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/60"
+            onClick={() => setAfiliacionExitosa(false)}
+          />
+          <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 text-center">
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-5">
+              <span className="text-5xl">🎉</span>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+              ¡Bienvenido a Evenser!
+            </h2>
+            <p className="text-gray-600 text-sm leading-relaxed mb-2">
+              Tu suscripción fue registrada con éxito. Los cobros se realizarán
+              automáticamente cada mes.
+            </p>
+            <p className="text-gray-500 text-xs mb-6">
+              Ante cualquier consulta podés comunicarte con nosotros por WhatsApp.
+            </p>
+            <a
+              href="https://wa.me/543734409813"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full bg-green-600 text-white py-3 rounded-xl font-medium text-sm hover:bg-green-700 transition-colors mb-3"
+            >
+              <span>📱</span> Contactar por WhatsApp
+            </a>
+            <button
+              onClick={() => setAfiliacionExitosa(false)}
+              className="w-full border border-gray-200 text-gray-500 py-3 rounded-xl text-sm hover:bg-gray-50 transition-colors"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
+    
   );
 }
