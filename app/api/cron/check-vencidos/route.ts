@@ -17,16 +17,15 @@ export async function GET(request: NextRequest) {
 
   // ✅ Marcar como vencidos todos los pagos pendientes con fecha pasada
   // Sin esto el cron nunca encuentra nada porque nadie los marcaba antes
-  const { count: marcados } = await supabase
+  const { data: marcadosData } = await supabase
     .from("payments")
     .update({ estado: "vencido" })
     .eq("estado", "pendiente")
     .lt("fecha", hoyStr)
-    .select("id", { count: "exact", head: true });
+    .select("id");
 
-  console.log(
-    `[check-vencidos] Pagos marcados como vencidos: ${marcados ?? 0}`,
-  );
+  const marcados = marcadosData?.length ?? 0;
+  console.log(`[check-vencidos] Pagos marcados como vencidos: ${marcados}`);
 
   const { data: clientes } = await supabase
     .from("clients")
@@ -59,7 +58,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     mensaje: "Check de vencidos completado",
-    marcados: marcados ?? 0,
+    marcados,
     notificaciones: enviados,
   });
 }
