@@ -1,9 +1,9 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
 export function createClient() {
   const cookieStore = cookies();
-
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -29,5 +29,15 @@ export function createClient() {
         },
       },
     },
+  );
+}
+
+// ✅ Cliente admin con service role — bypasea RLS
+// Usar SOLO en server-side (webhooks, cron jobs, actions de servidor)
+// NUNCA exponer al cliente
+export function createAdminClient() {
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
   );
 }
