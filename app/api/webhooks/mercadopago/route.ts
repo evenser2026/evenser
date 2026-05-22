@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { enviarNotificacion } from "@/lib/actions/push";
 
 export async function POST(request: NextRequest) {
@@ -56,7 +56,8 @@ async function handlePago(pagoId: string) {
 
   console.log("[MP Webhook] preapprovalId resuelto:", preapprovalId);
 
-  const supabase = createClient();
+  // ✅ Usar admin client para bypasear RLS — el webhook corre sin sesión
+  const supabase = createAdminClient();
 
   const { data: suscripcion } = await supabase
     .from("suscripciones_mp")
@@ -149,7 +150,8 @@ async function handleSuscripcion(preapprovalId: string) {
   if (!res.ok) return;
   const sub = await res.json();
 
-  const supabase = createClient();
+  // ✅ Usar admin client para bypasear RLS
+  const supabase = createAdminClient();
 
   const estadoMap: Record<string, string> = {
     authorized: "activa",
