@@ -1,6 +1,45 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { enviarNotificacion } from "@/lib/actions/push";
+import crypto from "crypto";
+
+// ✅ Verifica la firma del webhook enviada por MercadoPago
+function verificarFirmaMP(request: NextRequest, dataId: string): boolean {
+  const webhookSecret = process.env.MP_WEBHOOK_SECRET;
+
+  // Si no está configurado el secret, solo advertir (permite migración gradual)
+  if (!webhookSecret) {
+    console.warn(
+      "[MP Webhook] MP_WEBHOOK_SECRET no configurado — omitiendo verificación de firma",
+    );
+    return true;
+  }
+
+  const xSignature = request.headers.get("x-signature");
+  const xRequestId = request.headers.get("x-request-id");
+
+  if (!xSignature || !xRequestId) {
+    console.warn("[MP Webhook] Headers de firma ausentes");
+    return false;
+  }
+
+  const parts = xSignature.split(",");
+  const ts = parts.find((p) => p.startsWith("ts="))?.split("=")[1];
+  const v1 = parts.find((p) => p.startsWith("v1="))?.split("=")[1];
+
+  if (!ts || !v1) {
+    console.warn("[MP Webhook] Formato de x-signature inválido");
+    return false;
+  }
+
+  const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
+  const hash = crypto
+    .createHmac("sha256", webhookSecret)
+    .update(manifest)
+    .digest("hex");
+
+  return hash === v1;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,6 +47,12 @@ export async function POST(request: NextRequest) {
     const { type, data } = body;
 
     console.log("[MP Webhook]", type, data?.id);
+
+    // ✅ Verificar firma antes de procesar cualquier cosa
+    if (!verificarFirmaMP(request, data?.id ?? "")) {
+      console.error("[MP Webhook] Firma inválida — request rechazado");
+      return NextResponse.json({ error: "Firma inválida" }, { status: 401 });
+    }
 
     if (type === "payment") {
       await handlePago(data.id);
@@ -41,7 +86,6 @@ async function handlePago(pagoId: string) {
 
   if (pago.status !== "approved") return;
 
-  // ✅ MP puede enviar el preapproval_id directo o dentro de point_of_interaction
   const preapprovalId =
     pago.preapproval_id ||
     pago.point_of_interaction?.transaction_data?.subscription_id;
@@ -56,14 +100,19 @@ async function handlePago(pagoId: string) {
 
   console.log("[MP Webhook] preapprovalId resuelto:", preapprovalId);
 
-  // ✅ Usar admin client para bypasear RLS — el webhook corre sin sesión
   const supabase = createAdminClient();
 
-  const { data: test, error: testError } = await supabase
-  .from("suscripciones_mp")
-  .select("mp_preapproval_id")
-  .limit(5);
-  console.log("[MP Webhook] DEBUG suscripciones:", JSON.stringify(test), "error:", testError?.message);
+  // ✅ Idempotencia: verificar si este pago de MP ya fue procesado
+  const { data: pagoExistente } = await supabase
+    .from("payments")
+    .select("id")
+    .eq("mp_payment_id", pagoId)
+    .maybeSingle();
+
+  if (pagoExistente) {
+    console.log("[MP Webhook] Pago ya procesado, ignorando duplicado:", pagoId);
+    return;
+  }
 
   const { data: suscripcion } = await supabase
     .from("suscripciones_mp")
@@ -79,7 +128,7 @@ async function handlePago(pagoId: string) {
   const montoFinal = pago.transaction_amount || suscripcion.monto;
   const fechaHoy = new Date().toISOString().split("T")[0];
 
-  // Registrar el pago en payments y recuperar el id generado
+  // ✅ Guardar mp_payment_id como campo dedicado para idempotencia
   const { data: nuevoPago, error: errorPago } = await supabase
     .from("payments")
     .insert({
@@ -90,6 +139,7 @@ async function handlePago(pagoId: string) {
       estado: "pagado",
       tipo_pago: "mensual",
       descripcion: `Pago automático MP - ID: ${pagoId}`,
+      mp_payment_id: pagoId,
       checkout_dias: 35,
     })
     .select("id")
@@ -100,7 +150,6 @@ async function handlePago(pagoId: string) {
     return;
   }
 
-  // ✅ Registrar en contabilidad vinculado al pago
   if (nuevoPago) {
     const { error: errorContabilidad } = await supabase
       .from("accounting_entries")
@@ -122,7 +171,6 @@ async function handlePago(pagoId: string) {
     }
   }
 
-  // Actualizar estado de la suscripción
   await supabase
     .from("suscripciones_mp")
     .update({ estado: "activa", ultimo_pago: new Date().toISOString() })
@@ -133,7 +181,6 @@ async function handlePago(pagoId: string) {
     suscripcion.cliente_id,
   );
 
-  // Notificar después de registrar todo correctamente
   await enviarNotificacion({
     titulo: "💳 Pago recibido",
     cuerpo: `Se registró un pago de $${montoFinal}`,
@@ -156,7 +203,6 @@ async function handleSuscripcion(preapprovalId: string) {
   if (!res.ok) return;
   const sub = await res.json();
 
-  // ✅ Usar admin client para bypasear RLS
   const supabase = createAdminClient();
 
   const estadoMap: Record<string, string> = {

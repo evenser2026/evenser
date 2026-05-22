@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { enviarNotificacion } from "@/lib/actions/push";
 
 export async function GET(request: NextRequest) {
@@ -10,8 +10,23 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const supabase = createClient();
+  // ✅ Admin client para bypasear RLS — los crons corren sin sesión de usuario
+  const supabase = createAdminClient();
+
   const hoyStr = new Date().toISOString().split("T")[0];
+
+  // ✅ Marcar como vencidos todos los pagos pendientes con fecha pasada
+  // Sin esto el cron nunca encuentra nada porque nadie los marcaba antes
+  const { count: marcados } = await supabase
+    .from("payments")
+    .update({ estado: "vencido" })
+    .eq("estado", "pendiente")
+    .lt("fecha", hoyStr)
+    .select("id", { count: "exact", head: true });
+
+  console.log(
+    `[check-vencidos] Pagos marcados como vencidos: ${marcados ?? 0}`,
+  );
 
   const { data: clientes } = await supabase
     .from("clients")
@@ -44,6 +59,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     mensaje: "Check de vencidos completado",
+    marcados: marcados ?? 0,
     notificaciones: enviados,
   });
 }
