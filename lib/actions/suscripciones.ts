@@ -6,7 +6,6 @@ import { revalidatePath } from "next/cache";
 export async function crearSuscripcionMP(clienteId: string, monto: number) {
   const supabase = createClient();
 
-  // Obtener datos del cliente
   const { data: cliente, error } = await supabase
     .from("clients")
     .select("nombre, apellido, telefono")
@@ -17,8 +16,6 @@ export async function crearSuscripcionMP(clienteId: string, monto: number) {
     return { error: "Cliente no encontrado" };
   }
 
-  // Para sandbox necesitamos un email de prueba de MP
-  // En producción usaría el email real del cliente
   const emailCliente =
     process.env.MP_TEST_PAYER_EMAIL || "test_user_payer@testuser.com";
 
@@ -43,7 +40,7 @@ export async function crearSuscripcionMP(clienteId: string, monto: number) {
       return { error: data.error || "Error al crear suscripción" };
     }
 
-    revalidatePath(`/clientes/${clienteId}`);
+    revalidatePath(`/admin/clientes/${clienteId}`);
 
     return {
       success: true,
@@ -88,14 +85,23 @@ export async function cancelarSuscripcion(
     },
   );
 
-  if (!res.ok) return { error: "Error al cancelar en MP" };
-
   const supabase = createClient();
+
+  // ✅ Aunque MP falle, actualizar igual en DB para no dejar al cliente bloqueado
   await supabase
     .from("suscripciones_mp")
     .update({ estado: "cancelada" })
     .eq("mp_preapproval_id", preapprovalId);
 
-  revalidatePath(`/clientes/${clienteId}`);
+  revalidatePath(`/admin/clientes/${clienteId}`);
+
+  if (!res.ok) {
+    // MP falló pero DB quedó actualizada — loguear para revisar manualmente
+    console.error(
+      "[cancelarSuscripcion] MP rechazó la cancelación, pero DB fue actualizada",
+    );
+    return { success: true, warning: "Cancelado localmente, verificar en MP" };
+  }
+
   return { success: true };
 }

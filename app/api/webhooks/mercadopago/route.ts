@@ -39,21 +39,33 @@ async function handlePago(pagoId: string) {
   if (!res.ok) return;
   const pago = await res.json();
 
-  if (pago.status !== "approved" || !pago.preapproval_id) return;
+  if (pago.status !== "approved") return;
+
+  // ✅ MP puede enviar el preapproval_id directo o dentro de point_of_interaction
+  const preapprovalId =
+    pago.preapproval_id ||
+    pago.point_of_interaction?.transaction_data?.subscription_id;
+
+  if (!preapprovalId) {
+    console.warn(
+      "[MP Webhook] Pago sin preapproval_id ni subscription_id:",
+      pagoId,
+    );
+    return;
+  }
+
+  console.log("[MP Webhook] preapprovalId resuelto:", preapprovalId);
 
   const supabase = createClient();
 
   const { data: suscripcion } = await supabase
     .from("suscripciones_mp")
     .select("cliente_id, monto")
-    .eq("mp_preapproval_id", pago.preapproval_id)
+    .eq("mp_preapproval_id", preapprovalId)
     .single();
 
   if (!suscripcion) {
-    console.warn(
-      "[MP Webhook] Suscripción no encontrada:",
-      pago.preapproval_id,
-    );
+    console.warn("[MP Webhook] Suscripción no encontrada:", preapprovalId);
     return;
   }
 
@@ -107,7 +119,7 @@ async function handlePago(pagoId: string) {
   await supabase
     .from("suscripciones_mp")
     .update({ estado: "activa", ultimo_pago: new Date().toISOString() })
-    .eq("mp_preapproval_id", pago.preapproval_id);
+    .eq("mp_preapproval_id", preapprovalId);
 
   console.log(
     "[MP Webhook] Pago registrado para cliente:",
