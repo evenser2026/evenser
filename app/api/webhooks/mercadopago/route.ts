@@ -59,6 +59,12 @@ async function handlePago(pagoId: string) {
   // ✅ Usar admin client para bypasear RLS — el webhook corre sin sesión
   const supabase = createAdminClient();
 
+  const { data: test, error: testError } = await supabase
+  .from("suscripciones_mp")
+  .select("mp_preapproval_id")
+  .limit(5);
+  console.log("[MP Webhook] DEBUG suscripciones:", JSON.stringify(test), "error:", testError?.message);
+
   const { data: suscripcion } = await supabase
     .from("suscripciones_mp")
     .select("cliente_id, monto")
