@@ -1,804 +1,345 @@
 
 
-===== app/api/webhooks/mercadopago/route.ts =====
+===== components/forms/PagoForm.tsx =====
 
-import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/server";
-import { enviarNotificacion } from "@/lib/actions/push";
+'use client'
 
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { type, data } = body;
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { pagoSchema, type PagoInput } from '@/lib/validations'
+import { FormField } from '@/components/ui'
+import type { Cliente } from '@/types'
 
-    console.log("[MP Webhook]", type, data?.id);
-
-    if (type === "payment") {
-      await handlePago(data.id);
-    }
-
-    if (type === "subscription_preapproval") {
-      await handleSuscripcion(data.id);
-    }
-
-    return NextResponse.json({ received: true });
-  } catch (error) {
-    console.error("[MP Webhook] Error:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
-  }
+interface Props {
+  clientes?: Cliente[]
+  defaultClienteId?: string
+  onSubmit: (data: PagoInput) => Promise<void>
+  onCancel: () => void
+  loading?: boolean
 }
 
-export async function GET() {
-  return NextResponse.json({ ok: true });
-}
+export default function PagoForm({
+  clientes,
+  defaultClienteId,
+  onSubmit,
+  onCancel,
+  loading: externalLoading,
+}: Props) {
+  const [internalLoading, setInternalLoading] = useState(false)
+  const isLoading = externalLoading ?? internalLoading
 
-async function handlePago(pagoId: string) {
-  const accessToken = process.env.MP_ACCESS_TOKEN;
-  if (!accessToken) return;
-
-  const res = await fetch(`https://api.mercadopago.com/v1/payments/${pagoId}`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-
-  if (!res.ok) return;
-  const pago = await res.json();
-
-  if (pago.status !== "approved") return;
-
-  // ✅ MP puede enviar el preapproval_id directo o dentro de point_of_interaction
-  const preapprovalId =
-    pago.preapproval_id ||
-    pago.point_of_interaction?.transaction_data?.subscription_id;
-
-  if (!preapprovalId) {
-    console.warn(
-      "[MP Webhook] Pago sin preapproval_id ni subscription_id:",
-      pagoId,
-    );
-    return;
-  }
-
-  console.log("[MP Webhook] preapprovalId resuelto:", preapprovalId);
-
-  // ✅ Usar admin client para bypasear RLS — el webhook corre sin sesión
-  const supabase = createAdminClient();
-
-  const { data: test, error: testError } = await supabase
-  .from("suscripciones_mp")
-  .select("mp_preapproval_id")
-  .limit(5);
-  console.log("[MP Webhook] DEBUG suscripciones:", JSON.stringify(test), "error:", testError?.message);
-
-  const { data: suscripcion } = await supabase
-    .from("suscripciones_mp")
-    .select("cliente_id, monto")
-    .eq("mp_preapproval_id", preapprovalId)
-    .single();
-
-  if (!suscripcion) {
-    console.warn("[MP Webhook] Suscripción no encontrada:", preapprovalId);
-    return;
-  }
-
-  const montoFinal = pago.transaction_amount || suscripcion.monto;
-  const fechaHoy = new Date().toISOString().split("T")[0];
-
-  // Registrar el pago en payments y recuperar el id generado
-  const { data: nuevoPago, error: errorPago } = await supabase
-    .from("payments")
-    .insert({
-      cliente_id: suscripcion.cliente_id,
-      monto: montoFinal,
-      fecha: fechaHoy,
-      metodo_pago: "mercado_pago",
-      estado: "pagado",
-      tipo_pago: "mensual",
-      descripcion: `Pago automático MP - ID: ${pagoId}`,
+  const { register, handleSubmit, formState: { errors } } = useForm<PagoInput>({
+    resolver: zodResolver(pagoSchema),
+    defaultValues: {
+      cliente_id:   defaultClienteId ?? '',
+      monto:        undefined,
+      fecha:        new Date().toISOString().split('T')[0],
+      metodo_pago:  'efectivo',
+      estado:       'pagado',
+      tipo_pago:    'mensual',
+      descripcion:  '',
       checkout_dias: 35,
-    })
-    .select("id")
-    .single();
-
-  if (errorPago) {
-    console.error("[MP Webhook] Error al insertar payment:", errorPago);
-    return;
-  }
-
-  // ✅ Registrar en contabilidad vinculado al pago
-  if (nuevoPago) {
-    const { error: errorContabilidad } = await supabase
-      .from("accounting_entries")
-      .insert({
-        tipo: "ingreso",
-        categoria: "cuota_mensual",
-        monto: montoFinal,
-        fecha: fechaHoy,
-        descripcion: `Cuota mensual MP - ID: ${pagoId}`,
-        cliente_id: suscripcion.cliente_id,
-        pago_id: nuevoPago.id,
-      });
-
-    if (errorContabilidad) {
-      console.error(
-        "[MP Webhook] Error al insertar en contabilidad:",
-        errorContabilidad,
-      );
-    }
-  }
-
-  // Actualizar estado de la suscripción
-  await supabase
-    .from("suscripciones_mp")
-    .update({ estado: "activa", ultimo_pago: new Date().toISOString() })
-    .eq("mp_preapproval_id", preapprovalId);
-
-  console.log(
-    "[MP Webhook] Pago registrado para cliente:",
-    suscripcion.cliente_id,
-  );
-
-  // Notificar después de registrar todo correctamente
-  await enviarNotificacion({
-    titulo: "💳 Pago recibido",
-    cuerpo: `Se registró un pago de $${montoFinal}`,
-    url: `/admin/clientes/${suscripcion.cliente_id}`,
-    clienteId: suscripcion.cliente_id,
-  });
-}
-
-async function handleSuscripcion(preapprovalId: string) {
-  const accessToken = process.env.MP_ACCESS_TOKEN;
-  if (!accessToken) return;
-
-  const res = await fetch(
-    `https://api.mercadopago.com/preapproval/${preapprovalId}`,
-    {
-      headers: { Authorization: `Bearer ${accessToken}` },
     },
-  );
+  })
 
-  if (!res.ok) return;
-  const sub = await res.json();
-
-  // ✅ Usar admin client para bypasear RLS
-  const supabase = createAdminClient();
-
-  const estadoMap: Record<string, string> = {
-    authorized: "activa",
-    paused: "pausada",
-    cancelled: "cancelada",
-    pending: "pendiente",
-  };
-
-  await supabase
-    .from("suscripciones_mp")
-    .update({ estado: estadoMap[sub.status] || sub.status })
-    .eq("mp_preapproval_id", preapprovalId);
-
-  console.log(
-    "[MP Webhook] Suscripción actualizada:",
-    preapprovalId,
-    sub.status,
-  );
-}
-
-
-===== app/api/mp/suscripcion/route.ts =====
-
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-
-export async function POST(request: NextRequest) {
-  try {
-    const { clienteId, monto, descripcion, emailCliente } =
-      await request.json();
-
-    if (!clienteId || !monto || !emailCliente) {
-      return NextResponse.json({ error: "Datos incompletos" }, { status: 400 });
-    }
-
-    const accessToken = process.env.MP_ACCESS_TOKEN;
-    if (!accessToken) {
-      return NextResponse.json(
-        { error: "MP_ACCESS_TOKEN no configurado" },
-        { status: 500 },
-      );
-    }
-
-    const isTesting = accessToken.startsWith("TEST-");
-    const payerEmail = isTesting
-      ? (process.env.MP_TEST_PAYER_EMAIL ?? "TESTUSER8746695382589969460@testuser.com")
-      : emailCliente;
-
-    const body = {
-      reason: descripcion || "Suscripción mensual Evenser",
-      auto_recurring: {
-        frequency: 1,
-        frequency_type: "months",
-        transaction_amount: Number(monto),
-        currency_id: "ARS",
-      },
-      payer_email: payerEmail,
-      back_url: `${process.env.NEXT_PUBLIC_APP_URL}/admin/clientes/${clienteId}`,
-      status: "pending",
-    };
-
-    console.log("[MP Suscripción] Modo:", isTesting ? "TEST" : "PRODUCCIÓN");
-    console.log("[MP Suscripción] Payload:", JSON.stringify(body, null, 2));
-
-    const response = await fetch("https://api.mercadopago.com/preapproval", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify(body),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      console.error("[MP Suscripción] Error:", JSON.stringify(data, null, 2));
-      return NextResponse.json(
-        { error: data.message || "Error al crear suscripción en MP" },
-        { status: response.status },
-      );
-    }
-
-    console.log("[MP Suscripción] OK:", data.id);
-
-    // Guardar referencia de la suscripción en Supabase
-    const supabase = createClient();
-    await supabase.from("suscripciones_mp").insert({
-      cliente_id: clienteId,
-      mp_preapproval_id: data.id,
-      monto: Number(monto),
-      estado: "pendiente",
-      init_point: data.init_point,
-    });
-
-    return NextResponse.json({
-      id: data.id,
-      init_point: data.init_point,
-    });
-  } catch (error) {
-    console.error("[MP Suscripción] Excepción:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
-  }
-}
-
-===== lib/actions/pagos.ts =====
-
-"use server";
-import { createClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
-import type { PagoInput } from "@/lib/validations";
-
-export async function getPagos(clienteId?: string) {
-  const supabase = createClient();
-  let query = supabase
-    .from("payments")
-    .select("*, clients(nombre, apellido)")
-    .order("fecha", { ascending: false });
-  if (clienteId) query = query.eq("cliente_id", clienteId);
-  const { data, error } = await query;
-  if (error) throw error;
-  return data;
-}
-
-export async function createPago(input: PagoInput) {
-  const supabase = createClient();
-
-  const { data: nuevoPago, error } = await supabase
-    .from("payments")
-    .insert(input)
-    .select("id")
-    .single();
-
-  if (error) return { error: error.message };
-
-  // ✅ Reflejar en contabilidad solo si el pago está confirmado
-  if (nuevoPago && input.estado === "pagado") {
-    const { error: errorContabilidad } = await supabase
-      .from("accounting_entries")
-      .insert({
-        tipo: "ingreso",
-        categoria: "cuota_mensual",
-        monto: input.monto,
-        fecha: input.fecha,
-        descripcion:
-          input.descripcion || `Cuota mensual - ${input.metodo_pago}`,
-        cliente_id: input.cliente_id,
-        pago_id: nuevoPago.id,
-      });
-
-    if (errorContabilidad) {
-      console.error(
-        "[createPago] Error al insertar en contabilidad:",
-        errorContabilidad,
-      );
+  const handleFormSubmit = async (data: PagoInput) => {
+    setInternalLoading(true)
+    try {
+      await onSubmit(data)
+    } finally {
+      setInternalLoading(false)
     }
   }
 
-  revalidatePath("/admin/pagos");
-  revalidatePath("/admin/contabilidad");
-  revalidatePath(`/admin/clientes/${input.cliente_id}`);
-  return { success: true };
+  const showClienteSelector = !!clientes && clientes.length > 0 && !defaultClienteId
+
+  return (
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+
+      {showClienteSelector && (
+        <FormField label="Cliente" error={errors.cliente_id?.message} required>
+          <select {...register('cliente_id')} className="input">
+            <option value="">Seleccionar cliente...</option>
+            {clientes!.map((c) => (
+              <option key={c.id} value={c.id}>{c.apellido}, {c.nombre}</option>
+            ))}
+          </select>
+        </FormField>
+      )}
+
+      {defaultClienteId && (
+        <input type="hidden" {...register('cliente_id')} />
+      )}
+
+      <div className="grid grid-cols-2 gap-4">
+        <FormField label="Monto ($)" error={errors.monto?.message} required>
+          <input
+            type="number"
+            step="0.01"
+            {...register('monto')}
+            className="input"
+            placeholder="0.00"
+          />
+        </FormField>
+        <FormField label="Fecha" error={errors.fecha?.message} required>
+          <input type="date" {...register('fecha')} className="input" />
+        </FormField>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        <FormField label="Método" error={errors.metodo_pago?.message} required>
+          <select {...register('metodo_pago')} className="input">
+            <option value="efectivo">Efectivo</option>
+            <option value="transferencia">Transferencia</option>
+            <option value="mercado_pago">Mercado Pago</option>
+          </select>
+        </FormField>
+
+        <FormField label="Estado" error={errors.estado?.message} required>
+          <select {...register('estado')} className="input">
+            <option value="pagado">Pagado</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="vencido">Vencido</option>
+          </select>
+        </FormField>
+
+        <FormField label="Tipo" error={errors.tipo_pago?.message} required>
+          <select {...register('tipo_pago')} className="input">
+            <option value="mensual">Mensual</option>
+            <option value="unico">Único</option>
+            <option value="prepago">Prepago</option>
+          </select>
+        </FormField>
+      </div>
+
+      <FormField label="Descripción (opcional)" error={errors.descripcion?.message}>
+        <input
+          {...register('descripcion')}
+          className="input"
+          placeholder="Cuota diciembre 2024..."
+        />
+      </FormField>
+
+      <div className="flex gap-3 justify-end pt-2">
+        <button type="button" onClick={onCancel} disabled={isLoading} className="btn-secondary">
+          Cancelar
+        </button>
+        <button type="submit" disabled={isLoading} className="btn-primary">
+          {isLoading ? 'Guardando...' : 'Registrar pago'}
+        </button>
+      </div>
+    </form>
+  )
 }
 
-export async function updateEstadoPago(id: string, estado: string) {
-  const supabase = createClient();
+===== types/index.ts =====
 
-  const { error } = await supabase
-    .from("payments")
-    .update({ estado })
-    .eq("id", id);
+// ============================================================
+// EVENSER — Tipos TypeScript
+// ============================================================
 
-  if (error) return { error: error.message };
+// ── Enums base ────────────────────────────────────────────────
+export type Localidad =
+  | "Col. Elisa"
+  | "La Escondida"
+  | "Tirol"
+  | "La Verde"
+  | "Colonias Unidas"
+  | "Las Garcitas"
+  | "Otra";
 
-  // ✅ Si se marca como pagado, crear entry contable si no existe aún
-  if (estado === "pagado") {
-    const { data: pago } = await supabase
-      .from("payments")
-      .select("*")
-      .eq("id", id)
-      .single();
+export type MetodoPago = "efectivo" | "transferencia" | "mercado_pago";
+export type EstadoPago = "pagado" | "pendiente" | "vencido";
+export type TipoPago = "mensual" | "unico" | "prepago";
 
-    if (pago) {
-      const { data: existing } = await supabase
-        .from("accounting_entries")
-        .select("id")
-        .eq("pago_id", id)
-        .maybeSingle();
+export type TipoServicio =
+  | "traslado"
+  | "servicios_de_calle"
+  | "capilla_ardiente"
+  | "servicio_de_sala"
+  | "tramite_registro"
+  | "cremacion";
 
-      if (!existing) {
-        const { error: errorContabilidad } = await supabase
-          .from("accounting_entries")
-          .insert({
-            tipo: "ingreso",
-            categoria: "cuota_mensual",
-            monto: pago.monto,
-            fecha: pago.fecha,
-            descripcion:
-              pago.descripcion || `Cuota mensual - ${pago.metodo_pago}`,
-            cliente_id: pago.cliente_id,
-            pago_id: id,
-          });
+export type EstadoServicio =
+  | "pendiente"
+  | "en_proceso"
+  | "completado"
+  | "cancelado";
+export type TipoConvenio =
+  | "empresa"
+  | "sindicato"
+  | "municipio"
+  | "residencia_adultos";
+export type EstadoSuscripcion =
+  | "pendiente"
+  | "activa"
+  | "pausada"
+  | "cancelada";
 
-        if (errorContabilidad) {
-          console.error(
-            "[updateEstadoPago] Error al insertar en contabilidad:",
-            errorContabilidad,
-          );
-        }
-      }
-    }
-  }
+// Nuevos
+export type EstadoDeceased = "en_proceso" | "completado" | "cancelado";
+export type TipoContabilidad = "ingreso" | "egreso";
 
-  revalidatePath("/admin/pagos");
-  revalidatePath("/admin/contabilidad");
-  return { success: true };
+// ── Entidades existentes ──────────────────────────────────────
+export interface Cliente {
+  id: string;
+  nombre: string;
+  apellido: string;
+  dni: string;
+  telefono: string;
+  ocupacion?: string;
+  obra_social?: string;
+  localidad: Localidad;
+  carpeta_nacimiento?: string;
+  activo: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
-export async function deletePago(id: string) {
-  const supabase = createClient();
-
-  // Eliminar el entry contable vinculado si existe
-  await supabase.from("accounting_entries").delete().eq("pago_id", id);
-
-  const { error } = await supabase.from("payments").delete().eq("id", id);
-
-  if (error) return { error: error.message };
-
-  revalidatePath("/admin/pagos");
-  revalidatePath("/admin/contabilidad");
-  return { success: true };
+export interface FamiliarIntegrante {
+  id: string;
+  cliente_id: string;
+  nombre: string;
+  apellido: string;
+  dni: string;
+  edad: number;
+  parentesco: string;
+  created_at: string;
 }
 
-export async function getIngresosDelMes() {
-  const supabase = createClient();
-  const inicio = new Date();
-  inicio.setDate(1);
-  inicio.setHours(0, 0, 0, 0);
-  const { data, error } = await supabase
-    .from("payments")
-    .select("monto")
-    .eq("estado", "pagado")
-    .gte("fecha", inicio.toISOString());
-  if (error) return 0;
-  return data.reduce((sum, p) => sum + (p.monto || 0), 0);
+export interface Pago {
+  id: string;
+  cliente_id: string;
+  monto: number;
+  fecha: string;
+  metodo_pago: MetodoPago;
+  estado: EstadoPago;
+  tipo_pago: TipoPago;
+  descripcion?: string;
+  checkout_dias?: number;
+  fecha_vence?: string; // nuevo
+  insep_numero?: string; // nuevo
+  created_at: string;
+  cliente?: Cliente;
 }
 
-
-===== lib/actions/suscripciones.ts =====
-
-"use server";
-
-import { createClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
-
-export async function crearSuscripcionMP(clienteId: string, monto: number) {
-  const supabase = createClient();
-
-  const { data: cliente, error } = await supabase
-    .from("clients")
-    .select("nombre, apellido, telefono")
-    .eq("id", clienteId)
-    .single();
-
-  if (error || !cliente) {
-    return { error: "Cliente no encontrado" };
-  }
-
-  const emailCliente =
-    process.env.MP_TEST_PAYER_EMAIL || "test_user_payer@testuser.com";
-
-  const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL || "https://evenser.vercel.app";
-
-  try {
-    const res = await fetch(`${appUrl}/api/mp/suscripcion`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        clienteId,
-        monto,
-        descripcion: `Cuota mensual - ${cliente.apellido}, ${cliente.nombre}`,
-        emailCliente,
-      }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok || data.error) {
-      return { error: data.error || "Error al crear suscripción" };
-    }
-
-    revalidatePath(`/admin/clientes/${clienteId}`);
-
-    return {
-      success: true,
-      init_point: data.init_point,
-      id: data.id,
-    };
-  } catch (err) {
-    console.error("Error crearSuscripcionMP:", err);
-    return { error: "Error de conexión con Mercado Pago" };
-  }
+export interface Servicio {
+  id: string;
+  cliente_id: string;
+  tipo: TipoServicio;
+  fecha: string;
+  estado: EstadoServicio;
+  observaciones?: string;
+  imagen_url?: string;
+  created_at: string;
+  cliente?: Cliente;
 }
 
-export async function getSuscripcionByCliente(clienteId: string) {
-  const supabase = createClient();
-  const { data } = await supabase
-    .from("suscripciones_mp")
-    .select("*")
-    .eq("cliente_id", clienteId)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .single();
-
-  return data;
+export interface Convenio {
+  id: string;
+  nombre: string;
+  tipo: TipoConvenio;
+  contacto?: string;
+  telefono?: string;
+  servicios_prepagos: number;
+  servicios_usados: number;
+  saldo_favor: number;
+  activo: boolean;
+  cubre_traslado: boolean; // nuevo
+  cubre_tramite: boolean; // nuevo
+  cubre_pompas: boolean; // nuevo
+  created_at: string;
+  updated_at: string;
 }
 
-export async function cancelarSuscripcion(
-  preapprovalId: string,
-  clienteId: string,
-) {
-  const accessToken = process.env.MP_ACCESS_TOKEN;
-  if (!accessToken) return { error: "MP no configurado" };
-
-  const res = await fetch(
-    `https://api.mercadopago.com/preapproval/${preapprovalId}`,
-    {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({ status: "cancelled" }),
-    },
-  );
-
-  const supabase = createClient();
-
-  // ✅ Aunque MP falle, actualizar igual en DB para no dejar al cliente bloqueado
-  await supabase
-    .from("suscripciones_mp")
-    .update({ estado: "cancelada" })
-    .eq("mp_preapproval_id", preapprovalId);
-
-  revalidatePath(`/admin/clientes/${clienteId}`);
-
-  if (!res.ok) {
-    // MP falló pero DB quedó actualizada — loguear para revisar manualmente
-    console.error(
-      "[cancelarSuscripcion] MP rechazó la cancelación, pero DB fue actualizada",
-    );
-    return { success: true, warning: "Cancelado localmente, verificar en MP" };
-  }
-
-  return { success: true };
+export interface DashboardStats {
+  clientes_activos: number;
+  clientes_morosos: number;
+  ingresos_mes: number;
+  servicios_recientes: number;
 }
 
-
-===== app/api/cron/check-payments/route.ts =====
-
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { enviarNotificacion } from "@/lib/actions/push";
-
-export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const supabase = createClient();
-  const hoy = new Date();
-  const en7Dias = new Date(hoy);
-  en7Dias.setDate(hoy.getDate() + 7);
-
-  const hoyStr = hoy.toISOString().split("T")[0];
-  const en7DiasStr = en7Dias.toISOString().split("T")[0];
-
-  const { data: clientes } = await supabase
-    .from("clients")
-    .select("id, nombre, apellido")
-    .eq("activo", true);
-
-  if (!clientes?.length) {
-    return NextResponse.json({ mensaje: "Sin clientes activos", enviados: 0 });
-  }
-
-  let enviados = 0;
-
-  for (const cliente of clientes) {
-    const { data: pagos } = await supabase
-      .from("payments")
-      .select("id, fecha, estado")
-      .eq("cliente_id", cliente.id)
-      .eq("estado", "pendiente")
-      .gte("fecha", hoyStr)
-      .lte("fecha", en7DiasStr);
-
-    if (pagos?.length) {
-      const result = await enviarNotificacion({
-        titulo: "⏰ Pago próximo a vencer",
-        cuerpo: `${cliente.nombre} ${cliente.apellido} tiene ${pagos.length} pago(s) por vencer en los próximos 7 días`,
-        url: `/admin/clientes/${cliente.id}`,
-        clienteId: cliente.id,
-      });
-      if (result?.enviados > 0) enviados++;
-    }
-  }
-
-  return NextResponse.json({
-    mensaje: "Check de vencimientos completado",
-    notificaciones: enviados,
-  });
+export interface SuscripcionMP {
+  id: string;
+  cliente_id: string;
+  mp_preapproval_id: string;
+  monto: number;
+  estado: EstadoSuscripcion;
+  init_point: string;
+  ultimo_pago?: string;
+  created_at: string;
+  updated_at: string;
 }
 
+// ── Nuevas entidades ──────────────────────────────────────────
 
-===== app/api/cron/check-vencidos/route.ts =====
-
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { enviarNotificacion } from "@/lib/actions/push";
-
-export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const supabase = createClient();
-  const hoyStr = new Date().toISOString().split("T")[0];
-
-  const { data: clientes } = await supabase
-    .from("clients")
-    .select("id, nombre, apellido")
-    .eq("activo", true);
-
-  if (!clientes?.length) {
-    return NextResponse.json({ mensaje: "Sin clientes activos", enviados: 0 });
-  }
-
-  let enviados = 0;
-
-  for (const cliente of clientes) {
-    const { data: pagos } = await supabase
-      .from("payments")
-      .select("id, fecha, estado")
-      .eq("cliente_id", cliente.id)
-      .eq("estado", "vencido");
-
-    if (pagos?.length) {
-      const result = await enviarNotificacion({
-        titulo: "🔴 Pago vencido",
-        cuerpo: `${cliente.nombre} ${cliente.apellido} tiene ${pagos.length} pago(s) vencidos`,
-        url: `/admin/clientes/${cliente.id}`,
-        clienteId: cliente.id,
-      });
-      if (result?.enviados > 0) enviados++;
-    }
-  }
-
-  return NextResponse.json({
-    mensaje: "Check de vencidos completado",
-    notificaciones: enviados,
-  });
+export interface DeceasedRecord {
+  id: string;
+  cliente_id?: string;
+  familiar_id?: string;
+  nombre_fallecido: string;
+  apellido_fallecido: string;
+  dni_fallecido?: string;
+  fecha_fallecimiento: string;
+  causa?: string;
+  convenio_id?: string;
+  cubre_traslado: boolean;
+  cubre_capilla: boolean;
+  cubre_sala: boolean;
+  cubre_tramite: boolean;
+  cubre_cremacion: boolean;
+  cubre_serv_calle: boolean;
+  estado: EstadoDeceased;
+  observaciones?: string;
+  created_at: string;
+  updated_at: string;
+  // joins opcionales
+  cliente?: Pick<Cliente, "id" | "nombre" | "apellido">;
+  convenio?: Pick<Convenio, "id" | "nombre">;
 }
 
+export interface PetCremation {
+  id: string;
+  duenio_nombre: string;
+  duenio_telefono: string;
+  duenio_dni?: string;
+  mascota_nombre: string;
+  mascota_especie: string;
+  mascota_raza?: string;
+  mascota_peso_kg?: number;
+  fecha: string;
+  monto: number;
+  metodo_pago: MetodoPago;
+  estado_pago: EstadoPago;
+  foto_url?: string;
+  certificado_url?: string;
+  observaciones?: string;
+  created_at: string;
+}
 
-===== supabase/schema.sql =====
+export interface AccountingEntry {
+  id: string;
+  tipo: TipoContabilidad;
+  categoria: string;
+  descripcion?: string;
+  monto: number;
+  fecha: string;
+  comprobante_url?: string;
+  cliente_id?: string;
+  cerrado: boolean;
+  created_at: string;
+  cliente?: Pick<Cliente, "id" | "nombre" | "apellido">;
+}
 
--- ============================================================
--- EVENSER - Schema SQL para Supabase
--- Ejecutar en el SQL Editor de tu proyecto Supabase
--- ============================================================
+export interface ContractModification {
+  id: string;
+  cliente_id: string;
+  campo: string;
+  valor_anterior?: string;
+  valor_nuevo: string;
+  motivo?: string;
+  usuario_email?: string;
+  created_at: string;
+}
 
--- Habilitar extensión UUID
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
--- ============================================================
--- ENUMS
--- ============================================================
-CREATE TYPE localidad_enum AS ENUM (
-  'Col. Elisa', 'La Escondida', 'Tirol',
-  'La Verde', 'Colonias Unidas', 'Las Garcitas', 'Otra'
-);
-
-CREATE TYPE metodo_pago_enum AS ENUM ('efectivo', 'transferencia', 'mercado_pago');
-CREATE TYPE estado_pago_enum AS ENUM ('pagado', 'pendiente', 'vencido');
-CREATE TYPE tipo_pago_enum AS ENUM ('mensual', 'unico', 'prepago');
-
-CREATE TYPE tipo_servicio_enum AS ENUM (
-  'traslado', 'servicios_de_calle', 'capilla_ardiente',
-  'servicio_de_sala', 'tramite_registro', 'cremacion'
-);
-CREATE TYPE estado_servicio_enum AS ENUM ('pendiente', 'en_proceso', 'completado', 'cancelado');
-CREATE TYPE tipo_convenio_enum AS ENUM ('empresa', 'sindicato', 'municipio', 'residencia_adultos');
-
--- ============================================================
--- TABLA: clients
--- ============================================================
-CREATE TABLE clients (
-  id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  nombre        TEXT NOT NULL,
-  apellido      TEXT NOT NULL,
-  dni           TEXT NOT NULL,
-  telefono      TEXT NOT NULL,
-  ocupacion     TEXT,
-  obra_social   TEXT,
-  localidad     localidad_enum NOT NULL,
-  carpeta_nacimiento TEXT,
-  activo        BOOLEAN NOT NULL DEFAULT TRUE,
-  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_clients_localidad ON clients(localidad);
-CREATE INDEX idx_clients_activo    ON clients(activo);
-CREATE INDEX idx_clients_apellido  ON clients(apellido);
-
--- ============================================================
--- TABLA: family_members
--- ============================================================
-CREATE TABLE family_members (
-  id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  cliente_id  UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
-  nombre      TEXT NOT NULL,
-  apellido    TEXT NOT NULL,
-  dni         TEXT NOT NULL,
-  edad        INTEGER NOT NULL CHECK (edad >= 0 AND edad <= 120),
-  parentesco  TEXT NOT NULL,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_family_cliente ON family_members(cliente_id);
-
--- ============================================================
--- TABLA: payments
--- ============================================================
-CREATE TABLE payments (
-  id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  cliente_id     UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
-  monto          NUMERIC(12,2) NOT NULL CHECK (monto > 0),
-  fecha          DATE NOT NULL,
-  metodo_pago    metodo_pago_enum NOT NULL,
-  estado         estado_pago_enum NOT NULL DEFAULT 'pagado',
-  tipo_pago      tipo_pago_enum NOT NULL DEFAULT 'mensual',
-  descripcion    TEXT,
-  checkout_dias  INTEGER DEFAULT 35,
-  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_payments_cliente  ON payments(cliente_id);
-CREATE INDEX idx_payments_estado   ON payments(estado);
-CREATE INDEX idx_payments_fecha    ON payments(fecha DESC);
-
--- ============================================================
--- TABLA: services
--- ============================================================
-CREATE TABLE services (
-  id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  cliente_id    UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
-  tipo          tipo_servicio_enum NOT NULL,
-  fecha         DATE NOT NULL,
-  estado        estado_servicio_enum NOT NULL DEFAULT 'pendiente',
-  observaciones TEXT,
-  imagen_url    TEXT,
-  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_services_cliente ON services(cliente_id);
-CREATE INDEX idx_services_tipo    ON services(tipo);
-CREATE INDEX idx_services_estado  ON services(estado);
-CREATE INDEX idx_services_fecha   ON services(fecha DESC);
-
--- ============================================================
--- TABLA: agreements (convenios)
--- ============================================================
-CREATE TABLE agreements (
-  id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  nombre              TEXT NOT NULL,
-  tipo                tipo_convenio_enum NOT NULL,
-  contacto            TEXT,
-  telefono            TEXT,
-  servicios_prepagos  INTEGER NOT NULL DEFAULT 0 CHECK (servicios_prepagos >= 0),
-  servicios_usados    INTEGER NOT NULL DEFAULT 0 CHECK (servicios_usados >= 0),
-  saldo_favor         NUMERIC(12,2) NOT NULL DEFAULT 0,
-  activo              BOOLEAN NOT NULL DEFAULT TRUE,
-  created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_agreements_activo ON agreements(activo);
-
--- ============================================================
--- FUNCIÓN: actualizar updated_at automáticamente
--- ============================================================
-CREATE OR REPLACE FUNCTION set_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_clients_updated_at
-  BEFORE UPDATE ON clients
-  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
-
-CREATE TRIGGER trg_agreements_updated_at
-  BEFORE UPDATE ON agreements
-  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
-
--- ============================================================
--- ROW LEVEL SECURITY (RLS)
--- ============================================================
-ALTER TABLE clients        ENABLE ROW LEVEL SECURITY;
-ALTER TABLE family_members ENABLE ROW LEVEL SECURITY;
-ALTER TABLE payments       ENABLE ROW LEVEL SECURITY;
-ALTER TABLE services       ENABLE ROW LEVEL SECURITY;
-ALTER TABLE agreements     ENABLE ROW LEVEL SECURITY;
-
--- Política: solo usuarios autenticados pueden acceder
-CREATE POLICY "Authenticated users only" ON clients
-  FOR ALL TO authenticated USING (TRUE) WITH CHECK (TRUE);
-
-CREATE POLICY "Authenticated users only" ON family_members
-  FOR ALL TO authenticated USING (TRUE) WITH CHECK (TRUE);
-
-CREATE POLICY "Authenticated users only" ON payments
-  FOR ALL TO authenticated USING (TRUE) WITH CHECK (TRUE);
-
-CREATE POLICY "Authenticated users only" ON services
-  FOR ALL TO authenticated USING (TRUE) WITH CHECK (TRUE);
-
-CREATE POLICY "Authenticated users only" ON agreements
-  FOR ALL TO authenticated USING (TRUE) WITH CHECK (TRUE);
