@@ -8,10 +8,10 @@
 ## 🚀 PRÓXIMAS TAREAS PRIORITARIAS
 
 ### 🔴 P0 — Crítico
-1. [ ] Sincronizar `types/index.ts` con schema real → faltan tipos para `events`, `supplies`, `cemetery_plots`, `cemetery_sections`, `supply_movements`
+1. [x] Sincronizar `types/index.ts` con schema real → faltan tipos para `events`, `supplies`, `cemetery_plots`, `cemetery_sections`, `supply_movements`
 2. [ ] Verificar que `app/admin/fallecidos` funciona con tabla `deceased_records` real
 3. [ ] Verificar que `app/admin/mascotas` funciona con tabla `pet_cremations` real
-4. [ ] Fix warning useEffect en `app/admin/contabilidad/page.tsx` línea 52
+4. [x] Fix warning useEffect en `app/admin/contabilidad/page.tsx` línea 52
 
 ### 🟠 P1 — Alto (esta semana)
 5. [ ] Módulo Eventos completo → UI para `events` + `event_images` + `event_services` + `event_inquiries`
@@ -59,4 +59,6 @@
 | 2026-06-10 | Creación de EVENSER_MASTER.md con arquitectura completa | EVENSER_MASTER.md | ✅ |
 | 2026-06-10 | Export schema real desde Supabase producción | supabase/schema_real.sql | ✅ |
 | 2026-06-10 | Creación de TASKS.md | TASKS.md | ✅ |
+| 2026-06-10 | Sincronizar types/index.ts con schema real — 8 interfaces nuevas, 5 corregidas | types/index.ts | ✅ |
+| 2026-06-10 | Fix campos desincronizados en contabilidad, fallecidos, mascotas | app/admin/*/page.tsx | ✅ |
 | *(actualizar aquí)* | | | |

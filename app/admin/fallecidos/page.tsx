@@ -93,7 +93,7 @@ export default function FallecidosPage() {
                   r.cubre_sala && "Sala",
                   r.cubre_tramite && "Trámite",
                   r.cubre_cremacion && "Cremación",
-                  r.cubre_serv_calle && "Serv. calle",
+                  r.cubre_servicios_calle && "Serv. calle",
                 ].filter(Boolean);
                 return (
                   <tr key={r.id}>
@@ -128,12 +128,12 @@ export default function FallecidosPage() {
                       </div>
                     </td>
                     <td>
-                      <Badge variant={estadoVariant[r.estado]}>
-                        {r.estado.replace("_", " ")}
+                      <Badge variant={estadoVariant[r.estado_tramite]}>
+                        {r.estado_tramite.replace("_", " ")}
                       </Badge>
                     </td>
                     <td>
-                      {r.estado === "en_proceso" && (
+                      {r.estado_tramite === "en_proceso" && (
                         <button
                           onClick={async () => {
                             const res = await updateDeceasedEstado(

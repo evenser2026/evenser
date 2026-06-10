@@ -59,7 +59,7 @@ export default function ContabilidadPage() {
     );
 
   const entries = summary?.entries ?? [];
-  const mesCerrado = entries.length > 0 && entries.every((e) => e.cerrado);
+  const mesCerrado = false; // campo cerrado eliminado — no existe en DB
 
   return (
     <div>
@@ -207,7 +207,7 @@ export default function ContabilidadPage() {
                     {formatCurrency(e.monto)}
                   </td>
                   <td>
-                    {!e.cerrado && (
+                    {true && (
                       <button
                         onClick={async () => {
                           if (!window.confirm("¿Eliminar este movimiento?"))

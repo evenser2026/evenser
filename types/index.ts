@@ -10,6 +10,8 @@ export type Localidad =
   | "La Verde"
   | "Colonias Unidas"
   | "Las Garcitas"
+  | "Lapachito"
+  | "Capitán Solari"
   | "Otra";
 
 export type MetodoPago = "efectivo" | "transferencia" | "mercado_pago";
@@ -29,22 +31,88 @@ export type EstadoServicio =
   | "en_proceso"
   | "completado"
   | "cancelado";
+
 export type TipoConvenio =
   | "empresa"
   | "sindicato"
   | "municipio"
   | "residencia_adultos";
+
 export type EstadoSuscripcion =
   | "pendiente"
   | "activa"
   | "pausada"
   | "cancelada";
 
-// Nuevos
 export type EstadoDeceased = "en_proceso" | "completado" | "cancelado";
 export type TipoContabilidad = "ingreso" | "egreso";
 
-// ── Entidades existentes ──────────────────────────────────────
+// Nuevos enums
+export type TipoEvento =
+  | "empresarial"
+  | "recepcion"
+  | "social"
+  | "cumpleanos"
+  | "casamiento"
+  | "otro";
+
+export type EstadoEvento = "borrador" | "publicado" | "archivado";
+
+export type TipoServicioEvento =
+  | "sonido"
+  | "iluminacion"
+  | "foto"
+  | "video"
+  | "catering"
+  | "decoracion";
+
+export type EstadoConsulta =
+  | "nueva"
+  | "en_contacto"
+  | "presupuestada"
+  | "confirmada"
+  | "cancelada";
+
+export type EstadoParcela = "libre" | "reservado" | "ocupado" | "mantenimiento";
+
+export type EspecieMascota = "perro" | "gato" | "ave" | "conejo" | "otro";
+
+export type TipoMovimientoStock = "entrada" | "salida";
+
+export type CategoriaInsumo =
+  | "ataud"
+  | "urna"
+  | "flores"
+  | "velas"
+  | "ropa"
+  | "higiene"
+  | "papeleria"
+  | "ferreteria"
+  | "otro";
+
+export type CategoriaMovimiento =
+  | "cuota_mensual"
+  | "servicio_funerario"
+  | "cremacion_mascota"
+  | "convenio"
+  | "insumo"
+  | "salario"
+  | "alquiler"
+  | "impuesto"
+  | "evento"
+  | "otro";
+
+export type TipoModificacion =
+  | "cambio_plan"
+  | "cambio_localidad"
+  | "cambio_obra_social"
+  | "alta_familiar"
+  | "baja_familiar"
+  | "cambio_telefono"
+  | "otro";
+
+// ── Entidades ──────────────────────────────────────────────────
+
 export interface Cliente {
   id: string;
   nombre: string;
@@ -81,8 +149,9 @@ export interface Pago {
   tipo_pago: TipoPago;
   descripcion?: string;
   checkout_dias?: number;
-  fecha_vence?: string; // nuevo
-  insep_numero?: string; // nuevo
+  fecha_vence?: string;
+  insep_numero?: string;
+  mp_payment_id?: string;
   created_at: string;
   cliente?: Cliente;
 }
@@ -105,13 +174,17 @@ export interface Convenio {
   tipo: TipoConvenio;
   contacto?: string;
   telefono?: string;
+  descripcion?: string;
+  localidad?: Localidad;
+  direccion?: string;
+  email?: string;
   servicios_prepagos: number;
   servicios_usados: number;
   saldo_favor: number;
   activo: boolean;
-  cubre_traslado: boolean; // nuevo
-  cubre_tramite: boolean; // nuevo
-  cubre_pompas: boolean; // nuevo
+  cubre_traslado: boolean;
+  cubre_tramite: boolean;
+  cubre_pompas: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -131,29 +204,30 @@ export interface SuscripcionMP {
   estado: EstadoSuscripcion;
   init_point: string;
   ultimo_pago?: string;
+  alerta_enviada?: boolean;
   created_at: string;
   updated_at: string;
 }
 
-// ── Nuevas entidades ──────────────────────────────────────────
-
 export interface DeceasedRecord {
   id: string;
-  cliente_id?: string;
+  cliente_id: string;
   familiar_id?: string;
+  es_titular: boolean;
   nombre_fallecido: string;
   apellido_fallecido: string;
   dni_fallecido?: string;
   fecha_fallecimiento: string;
+  lugar_fallecimiento?: string;
   causa?: string;
   convenio_id?: string;
   cubre_traslado: boolean;
   cubre_capilla: boolean;
   cubre_sala: boolean;
   cubre_tramite: boolean;
+  cubre_servicios_calle: boolean;
   cubre_cremacion: boolean;
-  cubre_serv_calle: boolean;
-  estado: EstadoDeceased;
+  estado_tramite: EstadoServicio;
   observaciones?: string;
   created_at: string;
   updated_at: string;
@@ -164,33 +238,41 @@ export interface DeceasedRecord {
 
 export interface PetCremation {
   id: string;
+  cliente_id?: string;
   duenio_nombre: string;
   duenio_telefono: string;
   duenio_dni?: string;
   mascota_nombre: string;
-  mascota_especie: string;
-  mascota_raza?: string;
-  mascota_peso_kg?: number;
+  especie: EspecieMascota;
+  raza?: string;
+  peso_kg?: number;
+  fecha_servicio: string;
   fecha: string;
   monto: number;
   metodo_pago: MetodoPago;
-  estado_pago: EstadoPago;
+  estado: EstadoServicio;
   foto_url?: string;
   certificado_url?: string;
   observaciones?: string;
+  imagen_url?: string;
   created_at: string;
+  updated_at: string;
 }
 
 export interface AccountingEntry {
   id: string;
   tipo: TipoContabilidad;
-  categoria: string;
-  descripcion?: string;
+  categoria: CategoriaMovimiento;
+  descripcion: string;
   monto: number;
   fecha: string;
   comprobante_url?: string;
   cliente_id?: string;
-  cerrado: boolean;
+  pago_id?: string;
+  servicio_id?: string;
+  convenio_id?: string;
+  evento_id?: string;
+  created_by?: string;
   created_at: string;
   cliente?: Pick<Cliente, "id" | "nombre" | "apellido">;
 }
@@ -198,11 +280,133 @@ export interface AccountingEntry {
 export interface ContractModification {
   id: string;
   cliente_id: string;
-  campo: string;
-  valor_anterior?: string;
-  valor_nuevo: string;
-  motivo?: string;
-  usuario_email?: string;
+  tipo: TipoModificacion;
+  descripcion: string;
+  campo_anterior?: string;
+  campo_nuevo?: string;
+  usuario_id?: string;
   created_at: string;
 }
 
+// ── Eventos ───────────────────────────────────────────────────
+
+export interface Event {
+  id: string;
+  titulo: string;
+  tipo: TipoEvento;
+  fecha: string;
+  hora?: string;
+  lugar?: string;
+  descripcion?: string;
+  capacidad?: number;
+  estado: EstadoEvento;
+  portada_url?: string;
+  destacado: boolean;
+  precio_desde?: number;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+  // joins opcionales
+  imagenes?: EventImage[];
+  servicios?: EventService[];
+}
+
+export interface EventImage {
+  id: string;
+  event_id: string;
+  url: string;
+  public_id?: string;
+  caption?: string;
+  orden: number;
+  created_at: string;
+}
+
+export interface EventService {
+  id: string;
+  event_id: string;
+  tipo: TipoServicioEvento;
+  descripcion?: string;
+  proveedor?: string;
+  incluido: boolean;
+  created_at: string;
+}
+
+export interface EventInquiry {
+  id: string;
+  event_id?: string;
+  tipo_evento_req?: TipoEvento;
+  nombre: string;
+  telefono: string;
+  email?: string;
+  mensaje?: string;
+  fecha_estimada?: string;
+  cantidad_personas?: number;
+  estado: EstadoConsulta;
+  notas_internas?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// ── Cementerio ────────────────────────────────────────────────
+
+export interface CemeterySection {
+  id: string;
+  nombre: string;
+  descripcion?: string;
+  orden: number;
+  activo: boolean;
+  created_at: string;
+  // joins opcionales
+  parcelas?: CemeteryPlot[];
+}
+
+export interface CemeteryPlot {
+  id: string;
+  seccion_id: string;
+  fila: number;
+  columna: number;
+  numero: string;
+  estado: EstadoParcela;
+  deceased_id?: string;
+  nombre_difunto?: string;
+  fecha_inhumacion?: string;
+  cliente_id?: string;
+  precio?: number;
+  observaciones?: string;
+  created_at: string;
+  updated_at: string;
+  // joins opcionales
+  seccion?: Pick<CemeterySection, "id" | "nombre">;
+  cliente?: Pick<Cliente, "id" | "nombre" | "apellido">;
+}
+
+// ── Insumos ───────────────────────────────────────────────────
+
+export interface Supply {
+  id: string;
+  nombre: string;
+  categoria: CategoriaInsumo;
+  descripcion?: string;
+  stock_actual: number;
+  stock_minimo: number;
+  precio_unitario?: number;
+  proveedor?: string;
+  activo: boolean;
+  estado: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SupplyMovement {
+  id: string;
+  supply_id: string;
+  tipo: TipoMovimientoStock;
+  cantidad: number;
+  motivo?: string;
+  servicio_id?: string;
+  deceased_id?: string;
+  created_by?: string;
+  created_at: string;
+  // joins opcionales
+  supply?: Pick<Supply, "id" | "nombre" | "categoria">;
+}

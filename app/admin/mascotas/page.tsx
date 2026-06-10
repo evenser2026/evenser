@@ -43,7 +43,7 @@ export default function MascotasPage() {
       return (
         d.getMonth() === n.getMonth() &&
         d.getFullYear() === n.getFullYear() &&
-        r.estado_pago === "pagado"
+        r.estado === "completado"
       );
     })
     .reduce((s, r) => s + r.monto, 0);
@@ -105,8 +105,8 @@ export default function MascotasPage() {
                       </td>
                       <td className="font-medium">{r.mascota_nombre}</td>
                       <td className="text-gray-500 capitalize">
-                        {r.mascota_especie}
-                        {r.mascota_raza ? ` / ${r.mascota_raza}` : ""}
+                        {r.especie}
+                        {r.raza ? ` / ${r.raza}` : ""}
                       </td>
                       <td className="text-gray-500">{formatDate(r.fecha)}</td>
                       <td className="font-semibold">
@@ -116,8 +116,8 @@ export default function MascotasPage() {
                         {r.metodo_pago.replace("_", " ")}
                       </td>
                       <td>
-                        <Badge variant={pagoVariant[r.estado_pago]}>
-                          {r.estado_pago}
+                        <Badge variant={pagoVariant[r.estado]}>
+                          {r.estado}
                         </Badge>
                       </td>
                       <td>
@@ -147,7 +147,7 @@ export default function MascotasPage() {
                     <p className="font-medium text-sm">
                       {r.mascota_nombre}{" "}
                       <span className="text-gray-400 capitalize">
-                        ({r.mascota_especie})
+                        ({r.especie})
                       </span>
                     </p>
                     <p className="text-xs text-gray-500 mt-0.5">
@@ -158,8 +158,8 @@ export default function MascotasPage() {
                     <p className="font-semibold text-sm">
                       {formatCurrency(r.monto)}
                     </p>
-                    <Badge variant={pagoVariant[r.estado_pago]}>
-                      {r.estado_pago}
+                    <Badge variant={pagoVariant[r.estado]}>
+                      {r.estado}
                     </Badge>
                   </div>
                 </div>
