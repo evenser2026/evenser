@@ -157,9 +157,9 @@ estado_parcela_enum:     libre | reservado | ocupado | mantenimiento
 | Pagos | /admin/pagos | Con INSEP y MP |
 | Servicios funerarios | /admin/servicios | |
 | Convenios | /admin/convenios | Con cubre_traslado/tramite/pompas |
-| Fallecidos | /admin/fallecidos | Estructura creada, funcionalidad a verificar |
-| Mascotas | /admin/mascotas | Estructura creada, funcionalidad a verificar |
-| Contabilidad | /admin/contabilidad | Estructura creada, warning useEffect |
+| Fallecidos | /admin/fallecidos | ✅ Verificado y sincronizado con schema real |
+| Mascotas | /admin/mascotas | ✅ Verificado y sincronizado con schema real |
+| Contabilidad | /admin/contabilidad | ✅ Warning resuelto |
 | Reportes | /admin/reportes | |
 | Morosidad | /admin/reportes/morosidad | |
 | Configuración | /admin/configuracion | |

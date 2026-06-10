@@ -37,7 +37,7 @@
 ## 🐛 BUGS PENDIENTES POR MÓDULO
 
 ### contabilidad
-- [ ] **[MEDIO]** Warning useEffect missing dependency `load` en `app/admin/contabilidad/page.tsx:52`
+- [x] **[MEDIO]** Warning useEffect missing dependency `load` en `app/admin/contabilidad/page.tsx:52`
 
 ### types/index.ts
 - [x] **[ALTO]** `Convenio` no tiene campo `descripcion` ni `localidad` ni `direccion` ni `email` → están en DB pero no en el tipo
