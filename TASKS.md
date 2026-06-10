@@ -9,8 +9,8 @@
 
 ### 🔴 P0 — Crítico
 1. [x] Sincronizar `types/index.ts` con schema real → faltan tipos para `events`, `supplies`, `cemetery_plots`, `cemetery_sections`, `supply_movements`
-2. [ ] Verificar que `app/admin/fallecidos` funciona con tabla `deceased_records` real
-3. [ ] Verificar que `app/admin/mascotas` funciona con tabla `pet_cremations` real
+2. [x] Verificar que `app/admin/fallecidos` funciona con tabla `deceased_records` real
+3. [x] Verificar que `app/admin/mascotas` funciona con tabla `pet_cremations` real
 4. [x] Fix warning useEffect en `app/admin/contabilidad/page.tsx` línea 52
 
 ### 🟠 P1 — Alto (esta semana)
@@ -40,12 +40,12 @@
 - [ ] **[MEDIO]** Warning useEffect missing dependency `load` en `app/admin/contabilidad/page.tsx:52`
 
 ### types/index.ts
-- [ ] **[ALTO]** `Convenio` no tiene campo `descripcion` ni `localidad` ni `direccion` ni `email` → están en DB pero no en el tipo
-- [ ] **[ALTO]** Faltan interfaces: `Event`, `EventImage`, `EventService`, `EventInquiry`, `CemeterySection`, `CemeteryPlot`, `Supply`, `SupplyMovement`
+- [x] **[ALTO]** `Convenio` no tiene campo `descripcion` ni `localidad` ni `direccion` ni `email` → están en DB pero no en el tipo
+- [x] **[ALTO]** Faltan interfaces: `Event`, `EventImage`, `EventService`, `EventInquiry`, `CemeterySection`, `CemeteryPlot`, `Supply`, `SupplyMovement`
 - [ ] **[MEDIO]** `ContractModification` tiene `campo` y `valor_anterior`/`valor_nuevo` → DB tiene `campo_anterior`, `campo_nuevo`, `tipo`, `descripcion`, `usuario_id`
-- [ ] **[MEDIO]** `PetCremation` usa `mascota_especie` y `mascota_raza` → DB tiene `especie` y `raza`
-- [ ] **[MEDIO]** `AccountingEntry` tiene `cerrado: boolean` → no existe en DB
-- [ ] **[BAJO]** `localidad_enum` en tipos no incluye `Lapachito` ni `Capitán Solari`
+- [x] **[MEDIO]** `PetCremation` usa `mascota_especie` y `mascota_raza` → DB tiene `especie` y `raza`
+- [x] **[MEDIO]** `AccountingEntry` tiene `cerrado: boolean` → no existe en DB
+- [x] **[BAJO]** `localidad_enum` en tipos no incluye `Lapachito` ni `Capitán Solari`
 
 ### supabase/schema.sql
 - [ ] **[BAJO]** `schema.sql` está desactualizado → usar `schema_real.sql` como referencia
@@ -61,4 +61,5 @@
 | 2026-06-10 | Creación de TASKS.md | TASKS.md | ✅ |
 | 2026-06-10 | Sincronizar types/index.ts con schema real — 8 interfaces nuevas, 5 corregidas | types/index.ts | ✅ |
 | 2026-06-10 | Fix campos desincronizados en contabilidad, fallecidos, mascotas | app/admin/*/page.tsx | ✅ |
+| 2026-06-10 | Fix campos fallecidos/mascotas — validations, actions, forms sincronizados | múltiples | ✅ |
 | *(actualizar aquí)* | | | |
