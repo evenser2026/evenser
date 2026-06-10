@@ -1,20 +1,6 @@
 "use client";
 import { useState } from "react";
-
-type PetCremationInput = {
-  duenio_nombre: string;
-  duenio_telefono: string;
-  duenio_dni?: string;
-  mascota_nombre: string;
-  especie: string;
-  raza?: string;
-  peso_kg?: number;
-  fecha: string;
-  monto: number;
-  metodo_pago: "efectivo" | "transferencia" | "mercado_pago";
-  estado: "pagado" | "pendiente";
-  observaciones?: string;
-};
+import type { PetCremationInput } from "@/lib/validations/mascotas";
 
 type Props = {
   onSubmit: (data: PetCremationInput) => Promise<void>;
@@ -34,7 +20,7 @@ export default function PetCremationForm({ onSubmit, onCancel }: Props) {
     fecha: new Date().toISOString().split("T")[0],
     monto: 0,
     metodo_pago: "efectivo",
-    estado: "pagado",
+    estado: "pendiente",
     observaciones: "",
   });
 
@@ -138,10 +124,7 @@ export default function PetCremationForm({ onSubmit, onCancel }: Props) {
               className="input"
               value={form.peso_kg ?? ""}
               onChange={(e) =>
-                set(
-                  "peso_kg",
-                  e.target.value ? parseFloat(e.target.value) : undefined,
-                )
+                set("peso_kg", e.target.value ? parseFloat(e.target.value) : undefined)
               }
               placeholder="5.5"
             />
@@ -193,14 +176,16 @@ export default function PetCremationForm({ onSubmit, onCancel }: Props) {
             </select>
           </div>
           <div>
-            <label className="label">Estado del pago</label>
+            <label className="label">Estado del servicio</label>
             <select
               className="input"
               value={form.estado}
               onChange={(e) => set("estado", e.target.value as any)}
             >
-              <option value="pagado">Pagado</option>
               <option value="pendiente">Pendiente</option>
+              <option value="en_proceso">En proceso</option>
+              <option value="completado">Completado</option>
+              <option value="cancelado">Cancelado</option>
             </select>
           </div>
         </div>

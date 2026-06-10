@@ -75,7 +75,7 @@ export async function updateDeceasedEstado(
   const supabase = createClient();
   const { error } = await supabase
     .from("deceased_records")
-    .update({ estado })
+    .update({ estado_tramite: estado })
     .eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/admin/fallecidos");

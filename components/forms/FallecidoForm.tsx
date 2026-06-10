@@ -17,7 +17,7 @@ const fallecidoSchema = z.object({
   cubre_sala: z.boolean().optional(),
   cubre_tramite: z.boolean().optional(),
   cubre_cremacion: z.boolean().optional(),
-  cubre_serv_calle: z.boolean().optional(),
+  cubre_servicios_calle: z.boolean().optional(),
 })
 
 type FallecidoInput = z.infer<typeof fallecidoSchema>
@@ -55,7 +55,7 @@ export default function FallecidoForm({
       cubre_sala: false,
       cubre_tramite: false,
       cubre_cremacion: false,
-      cubre_serv_calle: false,
+      cubre_servicios_calle: false,
     },
   })
 
@@ -134,7 +134,7 @@ export default function FallecidoForm({
             <span className="text-sm">Cremación</span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" {...register('cubre_serv_calle')} />
+            <input type="checkbox" {...register('cubre_servicios_calle')} />
             <span className="text-sm">Serv. Calle</span>
           </label>
         </div>

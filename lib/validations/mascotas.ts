@@ -11,7 +11,7 @@ export const petCremationSchema = z.object({
   fecha: z.string().min(1, "Fecha requerida"),
   monto: z.coerce.number().positive("Monto debe ser positivo"),
   metodo_pago: z.enum(["efectivo", "transferencia", "mercado_pago"]),
-  estado: z.enum(["pagado", "pendiente", "vencido"]).default("pagado"),
+  estado: z.enum(["pendiente", "en_proceso", "completado", "cancelado"]).default("pendiente"),
   observaciones: z.string().optional(),
 });
 export type PetCremationInput = z.infer<typeof petCremationSchema>;

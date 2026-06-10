@@ -14,8 +14,8 @@ export const deceasedSchema = z.object({
   cubre_sala: z.boolean().default(false),
   cubre_tramite: z.boolean().default(false),
   cubre_cremacion: z.boolean().default(false),
-  cubre_serv_calle: z.boolean().default(false),
-  estado: z.enum(["en_proceso", "completado", "cancelado"]).default("en_proceso"),
+  cubre_servicios_calle: z.boolean().default(false),
+  estado_tramite: z.enum(["en_proceso", "completado", "cancelado"]).default("en_proceso"),
   observaciones: z.string().optional(),
 });
 export type DeceasedInput = z.infer<typeof deceasedSchema>;

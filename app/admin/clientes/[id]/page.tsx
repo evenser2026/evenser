@@ -428,13 +428,13 @@ export default function ClienteDetailPage() {
           onSubmit={async (data) => {
             const res = await createDeceased({
               ...data,
-              estado: "en_proceso",
+              estado_tramite: "en_proceso",
               cubre_traslado: data.cubre_traslado ?? false,
               cubre_capilla: data.cubre_capilla ?? false,
               cubre_sala: data.cubre_sala ?? false,
               cubre_tramite: data.cubre_tramite ?? false,
               cubre_cremacion: data.cubre_cremacion ?? false,
-              cubre_serv_calle: data.cubre_serv_calle ?? false,
+              cubre_servicios_calle: data.cubre_servicios_calle ?? false,
             });
             if (res?.error) { setError(res.error); return; }
             closeAll();
