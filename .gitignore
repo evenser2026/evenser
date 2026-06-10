@@ -11,3 +11,6 @@ public/sw.js
 public/workbox-*.js
 evenser-webapp/
 .agents/
+supabase/.temp/
+tsconfig.tsbuildinfo
+files.txt
