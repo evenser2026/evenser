@@ -17,6 +17,7 @@ import {
   HeartPulse,
   PawPrint,
   BookOpen,
+  Package,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +35,7 @@ const nav: NavItem[] = [
   { href: "/admin/convenios", label: "Convenios", icon: Handshake },
   { href: "/admin/fallecidos", label: "Fallecidos", icon: HeartPulse },
   { href: "/admin/mascotas", label: "Cremación mascotas", icon: PawPrint },
+  { href: "/admin/insumos", label: "Insumos", icon: Package },
   { href: "/admin/contabilidad", label: "Contabilidad", icon: BookOpen },
   { href: "/admin/reportes", label: "Reportes", icon: BarChart3 },
 ];

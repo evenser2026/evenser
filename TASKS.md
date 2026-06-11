@@ -15,7 +15,7 @@
 
 ### 🟠 P1 — Alto (esta semana)
 5. [ ] Módulo Eventos completo → UI para `events` + `event_images` + `event_services` + `event_inquiries`
-6. [ ] Módulo Insumos completo → UI para `supplies` + `supply_movements` (stock, alertas mínimo)
+6. [x] Módulo Insumos completo → UI para `supplies` + `supply_movements` (stock, alertas mínimo)
 7. [ ] Módulo Cementerio → UI para `cemetery_sections` + `cemetery_plots` (visual de parcelas)
 8. [ ] Suscripciones MP completas → flujo alta/baja/pausa con `suscripciones_mp`
 9. [ ] Export Excel → base de datos de clientes completa
@@ -47,6 +47,9 @@
 - [x] **[MEDIO]** `AccountingEntry` tiene `cerrado: boolean` → no existe en DB
 - [x] **[BAJO]** `localidad_enum` en tipos no incluye `Lapachito` ni `Capitán Solari`
 
+### contratos_insumos.ts
+- [ ] **[MEDIO]** `registrarModificacion` y `registerContractModification` usan campos viejos (`campo`, `valor_anterior`, `valor_nuevo`, `usuario_email`) → DB tiene `campo_anterior`, `campo_nuevo`, `tipo`, `descripcion`, `usuario_id`
+
 ### supabase/schema.sql
 - [ ] **[BAJO]** `schema.sql` está desactualizado → usar `schema_real.sql` como referencia
 
@@ -62,4 +65,5 @@
 | 2026-06-10 | Sincronizar types/index.ts con schema real — 8 interfaces nuevas, 5 corregidas | types/index.ts | ✅ |
 | 2026-06-10 | Fix campos desincronizados en contabilidad, fallecidos, mascotas | app/admin/*/page.tsx | ✅ |
 | 2026-06-10 | Fix campos fallecidos/mascotas — validations, actions, forms sincronizados | múltiples | ✅ |
+| 2026-06-10 | Módulo Insumos — actions, validations, UI completa, sidebar | lib/actions/insumos.ts, app/admin/insumos/ | ✅ |
 | *(actualizar aquí)* | | | |
