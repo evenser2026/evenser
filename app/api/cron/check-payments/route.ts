@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { enviarNotificacion } from "@/lib/actions/push";
+import { sendTelegram } from "@/lib/telegram";
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("Authorization");
@@ -48,6 +49,10 @@ export async function GET(request: NextRequest) {
         clienteId: cliente.id,
       });
       if (result?.enviados > 0) enviados++;
+
+      await sendTelegram(
+        `⚠️ <b>Pago próximo a vencer</b>\nCliente: ${cliente.nombre} ${cliente.apellido}\nPagos pendientes: ${pagos.length}`
+      )
     }
   }
 

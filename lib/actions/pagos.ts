@@ -2,6 +2,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { PagoInput } from "@/lib/validations";
+import { sendTelegram } from "@/lib/telegram";
 
 export async function getPagos(clienteId?: string) {
   const supabase = createClient();

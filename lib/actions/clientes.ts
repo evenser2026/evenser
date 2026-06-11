@@ -2,6 +2,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { ClienteInput } from '@/lib/validations'
+import { sendTelegram } from '@/lib/telegram'
 
 export async function getClientes(localidad?: string) {
   const supabase = createClient()
