@@ -17,7 +17,7 @@
 5. [ ] Módulo Eventos completo → UI para `events` + `event_images` + `event_services` + `event_inquiries`
 6. [x] Módulo Insumos completo → UI para `supplies` + `supply_movements` (stock, alertas mínimo)
 7. [ ] Módulo Cementerio → UI para `cemetery_sections` + `cemetery_plots` (visual de parcelas)
-8. [ ] Suscripciones MP completas → flujo alta/baja/pausa con `suscripciones_mp`
+8. [x] Suscripciones MP completas → flujo alta/baja/pausa con `suscripciones_mp`
 9. [ ] Export Excel → base de datos de clientes completa
 
 ### 🟡 P2 — Medio (próximas 2 semanas)
@@ -66,4 +66,5 @@
 | 2026-06-10 | Fix campos desincronizados en contabilidad, fallecidos, mascotas | app/admin/*/page.tsx | ✅ |
 | 2026-06-10 | Fix campos fallecidos/mascotas — validations, actions, forms sincronizados | múltiples | ✅ |
 | 2026-06-10 | Módulo Insumos — actions, validations, UI completa, sidebar | lib/actions/insumos.ts, app/admin/insumos/ | ✅ |
+| 2026-06-10 | Suscripciones MP — pausar/reactivar, página global /admin/suscripciones, sidebar | múltiples | ✅ |
 | *(actualizar aquí)* | | | |

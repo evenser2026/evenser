@@ -105,3 +105,79 @@ export async function cancelarSuscripcion(
 
   return { success: true };
 }
+
+export async function pausarSuscripcion(preapprovalId: string, clienteId: string) {
+  const accessToken = process.env.MP_ACCESS_TOKEN;
+  if (!accessToken) return { error: "MP no configurado" };
+
+  const res = await fetch(
+    `https://api.mercadopago.com/preapproval/${preapprovalId}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ status: "paused" }),
+    },
+  );
+
+  const supabase = createClient();
+  await supabase
+    .from("suscripciones_mp")
+    .update({ estado: "pausada" })
+    .eq("mp_preapproval_id", preapprovalId);
+
+  revalidatePath(`/admin/clientes/${clienteId}`);
+  revalidatePath("/admin/suscripciones");
+
+  if (!res.ok) {
+    console.error("[pausarSuscripcion] MP rechazó la pausa, pero DB fue actualizada");
+    return { success: true, warning: "Pausado localmente, verificar en MP" };
+  }
+
+  return { success: true };
+}
+
+export async function reactivarSuscripcion(preapprovalId: string, clienteId: string) {
+  const accessToken = process.env.MP_ACCESS_TOKEN;
+  if (!accessToken) return { error: "MP no configurado" };
+
+  const res = await fetch(
+    `https://api.mercadopago.com/preapproval/${preapprovalId}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ status: "authorized" }),
+    },
+  );
+
+  const supabase = createClient();
+  await supabase
+    .from("suscripciones_mp")
+    .update({ estado: "activa" })
+    .eq("mp_preapproval_id", preapprovalId);
+
+  revalidatePath(`/admin/clientes/${clienteId}`);
+  revalidatePath("/admin/suscripciones");
+
+  if (!res.ok) {
+    console.error("[reactivarSuscripcion] MP rechazó la reactivación, pero DB fue actualizada");
+    return { success: true, warning: "Reactivado localmente, verificar en MP" };
+  }
+
+  return { success: true };
+}
+
+export async function getAllSuscripciones() {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("suscripciones_mp")
+    .select(`*, cliente:clients(id, nombre, apellido, telefono, localidad)`)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}

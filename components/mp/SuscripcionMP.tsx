@@ -4,6 +4,8 @@ import { useState } from "react";
 import {
   crearSuscripcionMP,
   cancelarSuscripcion,
+  pausarSuscripcion,
+  reactivarSuscripcion,
 } from "@/lib/actions/suscripciones";
 import {
   CreditCard,
@@ -93,6 +95,24 @@ export default function SuscripcionMP({
     if (!window.confirm("¿Cancelar la suscripción de este cliente?")) return;
     setLoading(true);
     await cancelarSuscripcion(suscripcion.mp_preapproval_id, clienteId);
+    setLoading(false);
+    onUpdate();
+  };
+
+  const handlePausar = async () => {
+    if (!suscripcion) return;
+    if (!window.confirm("¿Pausar la suscripción?")) return;
+    setLoading(true);
+    await pausarSuscripcion(suscripcion.mp_preapproval_id, clienteId);
+    setLoading(false);
+    onUpdate();
+  };
+
+  const handleReactivar = async () => {
+    if (!suscripcion) return;
+    if (!window.confirm("¿Reactivar la suscripción?")) return;
+    setLoading(true);
+    await reactivarSuscripcion(suscripcion.mp_preapproval_id, clienteId);
     setLoading(false);
     onUpdate();
   };
