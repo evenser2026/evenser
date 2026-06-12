@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { enviarNotificacion } from "@/lib/actions/push";
+import { sendTelegram } from "@/lib/telegram";
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("Authorization");
@@ -54,6 +55,12 @@ export async function GET(request: NextRequest) {
       });
       if (result?.enviados > 0) enviados++;
     }
+  }
+
+  if (marcados > 0) {
+    await sendTelegram(
+      `🔴 <b>Pagos vencidos detectados</b>\n📊 ${marcados} pago(s) marcado(s) como vencidos\n⚠️ Revisá /admin/reportes/morosidad`
+    );
   }
 
   return NextResponse.json({

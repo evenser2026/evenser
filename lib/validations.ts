@@ -21,6 +21,7 @@ export const clienteSchema = z.object({
     errorMap: () => ({ message: "Seleccioná una localidad" }),
   }),
   carpeta_nacimiento: z.string().optional(),
+  metodo_cobro: z.enum(["mp", "manual"]).default("manual"),
 });
 
 export const familiarSchema = z.object({

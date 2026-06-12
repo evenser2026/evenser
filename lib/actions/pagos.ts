@@ -50,6 +50,22 @@ export async function createPago(input: PagoInput) {
     }
   }
 
+  // Telegram — pago registrado manualmente
+  if (input.estado === "pagado") {
+    const { data: cli } = await supabase
+      .from("clients")
+      .select("nombre, apellido")
+      .eq("id", input.cliente_id)
+      .single();
+    if (cli) {
+      const metodo = input.metodo_pago === "efectivo" ? "💵 Efectivo"
+        : input.metodo_pago === "transferencia" ? "🏦 Transferencia"
+        : "💳 Mercado Pago";
+      await sendTelegram(
+        `✅ <b>Pago registrado</b>\n👤 ${cli.apellido}, ${cli.nombre}\n💰 $${input.monto.toLocaleString("es-AR")}\n📋 ${metodo}\n📅 ${input.fecha}`
+      );
+    }
+  }
   revalidatePath("/admin/pagos");
   revalidatePath("/admin/contabilidad");
   revalidatePath(`/admin/clientes/${input.cliente_id}`);
@@ -105,6 +121,51 @@ export async function updateEstadoPago(id: string, estado: string) {
     }
   }
 
+  // Si se marcó como pagado y el cliente es manual, generar siguiente cuota pendiente
+  if (estado === "pagado") {
+    const { data: pagoActual } = await supabase
+      .from("payments")
+      .select("cliente_id, monto, metodo_pago, fecha_vence, clients(metodo_cobro)")
+      .eq("id", id)
+      .single();
+    const cliente = pagoActual?.clients as any;
+    if (pagoActual && cliente?.metodo_cobro === "manual" && pagoActual.fecha_vence) {
+      const base = new Date(pagoActual.fecha_vence);
+      const dia = base.getDate();
+      const siguiente = new Date(base);
+      siguiente.setMonth(siguiente.getMonth() + 1);
+      if (siguiente.getDate() !== dia) siguiente.setDate(0);
+      const nuevaFechaVence = siguiente.toISOString().split("T")[0];
+      await supabase.from("payments").insert({
+        cliente_id: pagoActual.cliente_id,
+        monto: pagoActual.monto,
+        fecha: pagoActual.fecha_vence,
+        metodo_pago: pagoActual.metodo_pago,
+        estado: "pendiente",
+        tipo_pago: "mensual",
+        descripcion: "Cuota mensual",
+        fecha_vence: nuevaFechaVence,
+      });
+    }
+  }
+
+  // Telegram — pago marcado como pagado
+  if (estado === "pagado") {
+    const { data: pagoInfo } = await supabase
+      .from("payments")
+      .select("monto, metodo_pago, fecha, cliente_id, clients(nombre, apellido)")
+      .eq("id", id)
+      .single();
+    if (pagoInfo) {
+      const cli = pagoInfo.clients as any;
+      const metodo = pagoInfo.metodo_pago === "efectivo" ? "💵 Efectivo"
+        : pagoInfo.metodo_pago === "transferencia" ? "🏦 Transferencia"
+        : "💳 Mercado Pago";
+      await sendTelegram(
+        `✅ <b>Pago confirmado</b>\n👤 ${cli?.apellido}, ${cli?.nombre}\n💰 $${pagoInfo.monto.toLocaleString("es-AR")}\n📋 ${metodo}\n📅 ${pagoInfo.fecha}`
+      );
+    }
+  }
   revalidatePath("/admin/pagos");
   revalidatePath("/admin/contabilidad");
   return { success: true };

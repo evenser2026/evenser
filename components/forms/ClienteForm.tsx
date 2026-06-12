@@ -56,6 +56,7 @@ export default function ClienteForm({
       obra_social: defaultValues?.obra_social ?? "",
       localidad: defaultValues?.localidad ?? ("" as any),
       carpeta_nacimiento: defaultValues?.carpeta_nacimiento ?? "",
+      metodo_cobro: defaultValues?.metodo_cobro ?? "manual",
     },
   });
 
@@ -137,6 +138,13 @@ export default function ClienteForm({
           className="input"
           placeholder="Nro. carpeta o referencia"
         />
+      </FormField>
+
+      <FormField label="Método de cobro" error={errors.metodo_cobro?.message} required>
+        <select {...register("metodo_cobro")} className="input">
+          <option value="manual">Manual (efectivo / transferencia)</option>
+          <option value="mp">Mercado Pago</option>
+        </select>
       </FormField>
 
       <div className="flex gap-3 justify-end pt-2">

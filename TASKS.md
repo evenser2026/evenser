@@ -67,6 +67,4 @@
 | 2026-06-10 | Fix campos fallecidos/mascotas — validations, actions, forms sincronizados | múltiples | ✅ |
 | 2026-06-10 | Módulo Insumos — actions, validations, UI completa, sidebar | lib/actions/insumos.ts, app/admin/insumos/ | ✅ |
 | 2026-06-10 | Suscripciones MP — pausar/reactivar, página global /admin/suscripciones, sidebar | múltiples | ✅ |
-| *(actualizar aquí)* | | | |
-
 | 2026-06-11 | Notificaciones Telegram — pagos, altas, morosos | lib/telegram.ts, lib/actions/pagos.ts, lib/actions/clientes.ts, app/api/cron/check-payments/route.ts | ✅ |

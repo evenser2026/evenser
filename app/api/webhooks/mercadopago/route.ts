@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { enviarNotificacion } from "@/lib/actions/push";
+import { sendTelegram } from "@/lib/telegram";
 import crypto from "crypto";
 
 // ✅ Verifica la firma del webhook enviada por MercadoPago
@@ -187,6 +188,10 @@ async function handlePago(pagoId: string) {
     url: `/admin/clientes/${suscripcion.cliente_id}`,
     clienteId: suscripcion.cliente_id,
   });
+
+  await sendTelegram(
+    `💳 <b>Pago MP automático</b>\n💰 $${montoFinal.toLocaleString("es-AR")}\n🆔 MP: ${pagoId}`
+  );
 }
 
 async function handleSuscripcion(preapprovalId: string) {

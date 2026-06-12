@@ -124,6 +124,7 @@ export interface Cliente {
   localidad: Localidad;
   carpeta_nacimiento?: string;
   activo: boolean;
+  metodo_cobro: 'mp' | 'manual';
   created_at: string;
   updated_at: string;
 }
