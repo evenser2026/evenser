@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { getAppConfig } from "@/lib/actions/config";
+
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 const servicios = [
@@ -337,9 +337,9 @@ function FormAfiliacion({
   });
 
   useEffect(() => {
-    getAppConfig().then((config) => {
+    fetch("/api/config").then((r) => r.json()).then((config) => {
       setLocalidadList(
-        config.localidades.filter((l) => l.activo).map((l) => l.nombre),
+        config.localidades.filter((l: any) => l.activo).map((l: any) => l.nombre),
       );
     });
   }, []);
@@ -874,7 +874,7 @@ export default function LandingPage() {
   const [afiliacionExitosa, setAfiliacionExitosa] = useState(false);
 
   useEffect(() => {
-    getAppConfig().then((config) => {
+    fetch("/api/config").then((r) => r.json()).then((config) => {
       setMontoConObra(config.monto_con_obra_social);
       setMontoSinObra(config.monto_sin_obra_social);
     });
