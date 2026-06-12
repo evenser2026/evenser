@@ -73,6 +73,7 @@ export async function updateConfigValue(clave: string, valor: string) {
     .eq("clave", clave);
   if (error) return { error: error.message };
   revalidatePath("/admin/configuracion");
+  revalidatePath("/");
   return { success: true };
 }
 
@@ -150,5 +151,6 @@ export async function updateAppConfig(
   );
   await Promise.all(updates);
   revalidatePath("/admin/configuracion");
+  revalidatePath("/");
   return { success: true };
 }
