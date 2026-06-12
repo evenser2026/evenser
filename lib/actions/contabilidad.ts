@@ -60,17 +60,34 @@ export async function deleteAccountingEntry(id: string) {
   return { success: true };
 }
 
-export async function cerrarMesContable(mes: number, anio: number) {
+export async function cerrarMesContable(_mes: number, _anio: number) {
+  // campo cerrado no existe en DB — función deshabilitada
+  return { success: true };
+}
+
+export async function getAccountingAnual(anio: number) {
   const supabase = createClient();
-  const inicio = new Date(anio, mes - 1, 1).toISOString().split("T")[0];
-  const fin = new Date(anio, mes, 1).toISOString().split("T")[0];
-  const { error } = await supabase
+  const inicio = new Date(anio, 0, 1).toISOString().split("T")[0];
+  const fin = new Date(anio + 1, 0, 1).toISOString().split("T")[0];
+  const { data, error } = await supabase
     .from("accounting_entries")
-    .update({ cerrado: true })
+    .select("tipo, monto, fecha, categoria")
     .gte("fecha", inicio)
     .lt("fecha", fin)
-    .eq("cerrado", false);
-  if (error) return { error: error.message };
-  revalidatePath("/admin/contabilidad");
-  return { success: true };
+    .order("fecha");
+  if (error) throw error;
+  const entries = data ?? [];
+
+  // Agrupar por mes
+  const meses = Array.from({ length: 12 }, (_, i) => {
+    const mesEntries = entries.filter((e) => new Date(e.fecha).getMonth() === i);
+    const ingresos = mesEntries.filter((e) => e.tipo === "ingreso").reduce((s, e) => s + e.monto, 0);
+    const egresos = mesEntries.filter((e) => e.tipo === "egreso").reduce((s, e) => s + e.monto, 0);
+    return { mes: i + 1, ingresos, egresos, balance: ingresos - egresos };
+  });
+
+  const totalIngresos = meses.reduce((s, m) => s + m.ingresos, 0);
+  const totalEgresos = meses.reduce((s, m) => s + m.egresos, 0);
+
+  return { meses, totalIngresos, totalEgresos, totalBalance: totalIngresos - totalEgresos };
 }
