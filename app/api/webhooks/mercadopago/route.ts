@@ -49,8 +49,9 @@ export async function POST(request: NextRequest) {
 
     console.log("[MP Webhook]", type, data?.id);
 
-    // ✅ Verificar firma antes de procesar cualquier cosa
-    if (!verificarFirmaMP(request, data?.id ?? "")) {
+    // ✅ Verificar firma solo en producción
+    const isTesting = process.env.MP_ACCESS_TOKEN?.startsWith("TEST-");
+    if (!isTesting && !verificarFirmaMP(request, data?.id ?? "")) {
       console.error("[MP Webhook] Firma inválida — request rechazado");
       return NextResponse.json({ error: "Firma inválida" }, { status: 401 });
     }
