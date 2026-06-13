@@ -68,3 +68,7 @@
 | 2026-06-10 | Módulo Insumos — actions, validations, UI completa, sidebar | lib/actions/insumos.ts, app/admin/insumos/ | ✅ |
 | 2026-06-10 | Suscripciones MP — pausar/reactivar, página global /admin/suscripciones, sidebar | múltiples | ✅ |
 | 2026-06-11 | Notificaciones Telegram — pagos, altas, morosos | lib/telegram.ts, lib/actions/pagos.ts, lib/actions/clientes.ts, app/api/cron/check-payments/route.ts | ✅ |
+
+| 2026-06-12 | Fix webhook MP — permitir simulaciones sin headers de firma | app/api/webhooks/mercadopago/route.ts | ✅ |
+| 2026-06-12 | Fix revalidar landing al guardar config | lib/actions/config.ts | ✅ |
+| 2026-06-12 | Fix montos landing sin caché — API pública /api/config | app/api/config/route.ts, app/page.tsx | ✅ |
