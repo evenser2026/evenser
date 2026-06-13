@@ -1,6 +1,7 @@
 import { getClientes } from "@/lib/actions/clientes";
 import { getPagos } from "@/lib/actions/pagos";
 import { getServicios } from "@/lib/actions/servicios";
+import { getAccountingEntries } from "@/lib/actions/contabilidad";
 import { Badge } from "@/components/ui";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import ExportButtons from "@/components/reportes/ExportButtons";
@@ -12,10 +13,11 @@ interface Props {
 }
 
 export default async function ReportesPage({ searchParams }: Props) {
-  const [clientes, pagos, servicios] = await Promise.all([
+  const [clientes, pagos, servicios, entries] = await Promise.all([
     getClientes(),
     getPagos(),
     getServicios(),
+    getAccountingEntries(),
   ]);
 
   const ahora = new Date();
@@ -35,6 +37,25 @@ export default async function ReportesPage({ searchParams }: Props) {
   const ingresosMes = pagosMes
     .filter((p: any) => p.estado === "pagado")
     .reduce((s: number, p: any) => s + p.monto, 0);
+
+  // Desglose por categoría del mes
+  const CATEGORIAS: Record<string, string> = {
+    cuota_mensual: "Cuotas mensuales",
+    servicio_funerario: "Servicios funerarios",
+    cremacion_mascota: "Cremaciones mascotas",
+    convenio: "Convenios",
+    evento: "Eventos",
+    otro: "Otros",
+  };
+  const entriesMes = entries.filter((e: any) => {
+    const fecha = new Date(e.fecha);
+    return fecha >= inicioMes && fecha < finMes && e.tipo === "ingreso";
+  });
+  const porCategoria: Record<string, number> = {};
+  for (const e of entriesMes) {
+    const cat = e.categoria ?? "otro";
+    porCategoria[cat] = (porCategoria[cat] || 0) + e.monto;
+  }
 
   const morosos = pagos.filter((p: any) => p.estado === "vencido");
   const idsMorosos = new Set(morosos.map((p: any) => p.cliente_id));

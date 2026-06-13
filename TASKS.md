@@ -72,3 +72,6 @@
 | 2026-06-12 | Fix webhook MP — permitir simulaciones sin headers de firma | app/api/webhooks/mercadopago/route.ts | ✅ |
 | 2026-06-12 | Fix revalidar landing al guardar config | lib/actions/config.ts | ✅ |
 | 2026-06-12 | Fix montos landing sin caché — API pública /api/config | app/api/config/route.ts, app/page.tsx | ✅ |
+| 2026-06-12 | Crons diarios Vercel — check-vencidos 8am + check-payments 9am ARG | vercel.json | ✅ |
+| 2026-06-12 | Mensaje Telegram enriquecido con nombre cliente y operación | app/api/webhooks/mercadopago/route.ts | ✅ |
+| 2026-06-12 | Fix afiliacion usa createAdminClient para leer config sin sesión | app/api/afiliacion/route.ts | ✅ |
