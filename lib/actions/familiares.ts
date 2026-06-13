@@ -37,3 +37,13 @@ export async function deleteFamiliar(id: string, clienteId?: string) {
 
   return { success: true };
 }
+
+export async function getAllFamiliares() {
+  const { createAdminClient } = await import("@/lib/supabase/server");
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from("family_members")
+    .select("*, clients(nombre, apellido)")
+    .order("created_at", { ascending: false });
+  return data ?? [];
+}

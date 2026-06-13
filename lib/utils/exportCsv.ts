@@ -146,3 +146,17 @@ export function prepareMascotasSheet(mascotas: any[]) {
     Estado: m.estado,
   }));
 }
+
+export function prepareSuscripcionesSheet(suscripciones: any[]) {
+  return suscripciones.map((s) => ({
+    "Apellido cliente": s.cliente?.apellido ?? "",
+    "Nombre cliente": s.cliente?.nombre ?? "",
+    "Teléfono": s.cliente?.telefono ?? "",
+    Localidad: s.cliente?.localidad ?? "",
+    Monto: s.monto,
+    Estado: s.estado,
+    "Preapproval ID": s.mp_preapproval_id ?? "",
+    "Último pago": s.ultimo_pago ? s.ultimo_pago.slice(0, 10) : "",
+    "Creada": s.created_at ? s.created_at.slice(0, 10) : "",
+  }));
+}

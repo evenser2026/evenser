@@ -9,6 +9,8 @@ import {
   preparePagosSheet,
   prepareServiciosSheet,
   prepareFamiliaresSheet,
+  prepareMascotasSheet,
+  prepareSuscripcionesSheet,
 } from "@/lib/utils/exportCsv";
 
 interface Props {
@@ -16,6 +18,8 @@ interface Props {
   pagos: any[];
   servicios: any[];
   familiares?: any[];
+  mascotas?: any[];
+  suscripciones?: any[];
 }
 
 export default function ExportButtons({
@@ -23,6 +27,8 @@ export default function ExportButtons({
   pagos,
   servicios,
   familiares = [],
+  mascotas = [],
+  suscripciones = [],
 }: Props) {
   const [loadingCsv, setLoadingCsv] = useState(false);
   const [loadingXlsx, setLoadingXlsx] = useState(false);

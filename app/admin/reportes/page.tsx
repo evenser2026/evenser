@@ -2,6 +2,9 @@ import { getClientes } from "@/lib/actions/clientes";
 import { getPagos } from "@/lib/actions/pagos";
 import { getServicios } from "@/lib/actions/servicios";
 import { getAccountingEntries } from "@/lib/actions/contabilidad";
+import { getAllFamiliares } from "@/lib/actions/familiares";
+import { getPetCremations } from "@/lib/actions/mascotas";
+import { getAllSuscripciones } from "@/lib/actions/suscripciones";
 import { Badge } from "@/components/ui";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import ExportButtons from "@/components/reportes/ExportButtons";
@@ -13,11 +16,14 @@ interface Props {
 }
 
 export default async function ReportesPage({ searchParams }: Props) {
-  const [clientes, pagos, servicios, entries] = await Promise.all([
+  const [clientes, pagos, servicios, entries, familiares, mascotas, suscripciones] = await Promise.all([
     getClientes(),
     getPagos(),
     getServicios(),
     getAccountingEntries(),
+    getAllFamiliares(),
+    getPetCremations(),
+    getAllSuscripciones(),
   ]);
 
   const ahora = new Date();
@@ -116,6 +122,9 @@ export default async function ReportesPage({ searchParams }: Props) {
           clientes={clientesFiltrados}
           pagos={pagosMes}
           servicios={servicios}
+          familiares={familiares}
+          mascotas={mascotas}
+          suscripciones={suscripciones}
         />
       </div>
 
