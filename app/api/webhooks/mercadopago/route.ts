@@ -118,7 +118,7 @@ async function handlePago(pagoId: string) {
 
   const { data: suscripcion } = await supabase
     .from("suscripciones_mp")
-    .select("cliente_id, monto")
+    .select("cliente_id, monto, cliente:clients(nombre, apellido)")
     .eq("mp_preapproval_id", preapprovalId)
     .single();
 
@@ -191,7 +191,7 @@ async function handlePago(pagoId: string) {
   });
 
   await sendTelegram(
-    `💳 <b>Pago MP automático</b>\n💰 $${montoFinal.toLocaleString("es-AR")}\n🆔 MP: ${pagoId}`
+    `💳 <b>Pago MP automático</b>\n👤 ${(suscripcion.cliente as any)?.apellido}, ${(suscripcion.cliente as any)?.nombre}\n💰 ${montoFinal.toLocaleString("es-AR")}\n🆔 Operación: ${pagoId}`
   );
 }
 
