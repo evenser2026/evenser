@@ -332,6 +332,7 @@ function FormAfiliacion({
     email: "",
     ocupacion: "",
     obra_social: "",
+    obra_social_nro_credencial: "",
     localidad: "",
     carpeta_nacimiento: "",
   });
@@ -608,6 +609,21 @@ function FormAfiliacion({
           </select>
         </div>
       </div>
+      {form.obra_social === "INSSSEP" && (
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Nº Credencial INSSSEP <span className="text-red-500">*</span>
+          </label>
+          <input
+            name="obra_social_nro_credencial"
+            value={form.obra_social_nro_credencial}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-stone-500"
+            placeholder="Número de credencial"
+          />
+          <p className="text-xs text-gray-400 mt-1">Encontralo en tu credencial física o en la app InSSSePFarma</p>
+        </div>
+      )}
       <div className="bg-stone-50 border border-stone-200 rounded-lg p-3 flex items-center justify-between">
         <span className="text-sm text-stone-600">
           {form.obra_social && form.obra_social.trim() !== ""
