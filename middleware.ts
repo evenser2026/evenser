@@ -38,12 +38,16 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isAuthRoute = pathname.startsWith("/auth/login");
+  const isPortalLogin = pathname === "/cliente";
+  const isPortalProtected = pathname.startsWith("/cliente/");
+
   const isPublicRoute =
     pathname === "/" ||
     pathname.startsWith("/landing") ||
     pathname.startsWith("/cementerio") ||
     pathname.startsWith("/api/afiliacion") ||
-    pathname.startsWith("/api/webhooks");
+    pathname.startsWith("/api/webhooks") ||
+    isPortalLogin;
   const isStaticRoute =
     pathname.startsWith("/_next") ||
     pathname.startsWith("/icons") ||
@@ -58,7 +62,13 @@ export async function middleware(request: NextRequest) {
 
   if (isStaticRoute) return response;
 
-  if (!user && !isAuthRoute && !isPublicRoute) {
+  if (!user && isPortalProtected) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/cliente";
+    return NextResponse.redirect(url);
+  }
+
+  if (!user && !isAuthRoute && !isPublicRoute && !isPortalProtected) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
     return NextResponse.redirect(url);
