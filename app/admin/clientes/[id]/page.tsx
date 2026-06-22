@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getClienteById, updateCliente } from "@/lib/actions/clientes";
+import { getClienteById, updateCliente, activarPortalCliente, desactivarPortalCliente } from "@/lib/actions/clientes";
 import { createFamiliar, deleteFamiliar } from "@/lib/actions/familiares";
 import { createPago } from "@/lib/actions/pagos";
 import { createServicio } from "@/lib/actions/servicios";
@@ -22,7 +22,7 @@ import ServicioForm from "@/components/forms/ServicioForm";
 import FallecidoForm from "@/components/forms/FallecidoForm";
 import SuscripcionMP from "@/components/mp/SuscripcionMP";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { ArrowLeft, UserPlus, Plus, Trash2, HeartPulse, FileText } from "lucide-react";
+import { ArrowLeft, UserPlus, Plus, Trash2, HeartPulse, FileText, Globe } from "lucide-react";
 import type { SuscripcionMP as SuscripcionMPType } from "@/types";
 import type { AppConfig } from "@/lib/actions/config";
 import type { ClienteInput } from "@/lib/validations";
@@ -208,6 +208,47 @@ export default function ClienteDetailPage() {
               </div>
             ))}
           </div>
+          {/* Portal de acceso */}
+          <div className="card p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                  <Globe size={15} /> Portal de afiliados
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {cliente.portal_activo
+                    ? "El afiliado puede ingresar con su DNI en /cliente"
+                    : "El afiliado no tiene acceso al portal habilitado"}
+                </p>
+              </div>
+              {cliente.portal_activo ? (
+                <button
+                  onClick={async () => {
+                    if (!window.confirm("¿Desactivar acceso al portal para este cliente?")) return;
+                    const res = await desactivarPortalCliente(id);
+                    if (res?.error) setError(res.error);
+                    else load();
+                  }}
+                  className="btn-secondary text-sm text-red-600 border-red-200 hover:bg-red-50"
+                >
+                  Desactivar acceso
+                </button>
+              ) : (
+                <button
+                  onClick={async () => {
+                    if (!window.confirm(`¿Activar acceso al portal para ${cliente.nombre}? Su contraseña inicial será su DNI.`)) return;
+                    const res = await activarPortalCliente(id, cliente.dni);
+                    if (res?.error) setError(res.error);
+                    else load();
+                  }}
+                  className="btn-primary text-sm"
+                >
+                  Activar acceso
+                </button>
+              )}
+            </div>
+          </div>
+
           <SuscripcionMP
             clienteId={id}
             clienteNombre={`${cliente.nombre} ${cliente.apellido}`}
