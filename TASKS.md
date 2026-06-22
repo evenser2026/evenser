@@ -99,3 +99,20 @@
 - El admin activa el acceso, el afiliado no se registra solo
 - Vive en `/cliente` dentro del mismo proyecto Next.js
 - Acciones permitidas: ver info, descargar comprobantes, editar teléfono, cambiar password
+
+---
+
+## 🟡 Fix — Obra Social: campo texto → select
+> Agregado 2026-06-22. Actualmente es input libre, debe ser select controlado.
+
+### Tareas
+- [ ] 1. Agregar enum `obra_social_enum` en Supabase: por ahora solo valor `INSSSEP`
+- [ ] 2. Migrar columna `obra_social` en tabla `clients` a usar el enum (o dejarlo TEXT con validación Zod)
+- [ ] 3. Reemplazar input libre por `<select>` en `ClienteForm` con opciones del enum
+- [ ] 4. Actualizar schema Zod en `validations.ts` para aceptar solo valores permitidos
+- [ ] 5. Verificar que registros existentes no queden con valor inválido
+
+### Decisiones tomadas
+- Por ahora una sola opción: INSSSEP
+- Diseñado para escalar: agregar más obras sociales solo requiere actualizar el enum/array
+- Si no tiene obra social: opción "Ninguna" o campo nullable
