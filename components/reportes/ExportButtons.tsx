@@ -56,6 +56,8 @@ export default function ExportButtons({
           { name: "Familiares", rows: prepareFamiliaresSheet(familiares) },
           { name: "Pagos", rows: preparePagosSheet(pagos) },
           { name: "Servicios", rows: prepareServiciosSheet(servicios) },
+          { name: "Mascotas", rows: prepareMascotasSheet(mascotas) },
+          { name: "Suscripciones MP", rows: prepareSuscripcionesSheet(suscripciones) },
         ],
         `evenser_reporte_${fecha}.xlsx`,
       );
