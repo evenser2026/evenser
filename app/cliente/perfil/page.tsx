@@ -66,26 +66,35 @@ export default function ClientePerfilPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold text-gray-900">Mi perfil</h1>
+      <h1 className="text-xl font-semibold text-brand-950 pt-1 pb-2">Mi perfil</h1>
+
+      {/* Avatar + nombre */}
+      <div className="card p-5 flex items-center gap-4">
+        <div className="w-14 h-14 rounded-full bg-brand-100 flex items-center justify-center text-lg font-semibold text-brand-700 shrink-0">
+          {cliente.nombre[0]}{cliente.apellido[0]}
+        </div>
+        <div>
+          <p className="font-semibold text-brand-950">{cliente.nombre} {cliente.apellido}</p>
+          <p className="text-sm text-brand-400">DNI {cliente.dni}</p>
+          <p className="text-xs text-brand-400 mt-0.5">{cliente.localidad}</p>
+        </div>
+      </div>
 
       {/* Datos personales */}
-      <div className="card p-5 space-y-3">
-        <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">Datos personales</p>
+      <div className="card p-5 space-y-0">
+        <p className="text-xs text-brand-400 uppercase tracking-wider font-medium mb-3">Datos personales</p>
         {[
-          ["Nombre", `${cliente.nombre} ${cliente.apellido}`],
-          ["DNI", cliente.dni],
-          ["Localidad", cliente.localidad],
           ["Obra social", cliente.obra_social || "—"],
         ].map(([label, value]) => (
-          <div key={label} className="flex justify-between">
-            <span className="text-sm text-gray-500">{label}</span>
-            <span className="text-sm font-medium text-gray-900">{value}</span>
+          <div key={label} className="flex justify-between py-2 border-b border-brand-50">
+            <span className="text-sm text-brand-500">{label}</span>
+            <span className="text-sm font-medium text-brand-900">{value}</span>
           </div>
         ))}
 
         {/* Teléfono editable */}
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-500">Teléfono</span>
+        <div className="flex justify-between items-center py-2">
+          <span className="text-sm text-brand-500">Teléfono</span>
           {editTel ? (
             <div className="flex items-center gap-2">
               <input
@@ -96,21 +105,21 @@ export default function ClientePerfilPage() {
               <button onClick={handleSaveTelefono} disabled={savingTel} className="btn-primary text-xs px-2 py-1">
                 {savingTel ? "..." : "Guardar"}
               </button>
-              <button onClick={() => setEditTel(false)} className="text-xs text-gray-400">Cancelar</button>
+              <button onClick={() => setEditTel(false)} className="text-xs text-brand-400">Cancelar</button>
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-900">{cliente.telefono}</span>
-              <button onClick={() => setEditTel(true)} className="text-xs text-brand-700 underline">Editar</button>
+              <span className="text-sm font-medium text-brand-900">{cliente.telefono}</span>
+              <button onClick={() => setEditTel(true)} className="text-xs text-brand-600 underline">Editar</button>
             </div>
           )}
         </div>
-        {msgTel && <p className="text-xs text-green-600">{msgTel}</p>}
+        {msgTel && <p className="text-xs text-green-600 mt-1">{msgTel}</p>}
       </div>
 
       {/* Cambiar contraseña */}
       <div className="card p-5 space-y-3">
-        <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">Cambiar contraseña</p>
+        <p className="text-xs text-brand-400 uppercase tracking-wider font-medium">Cambiar contraseña</p>
         <input
           type="password"
           value={password}

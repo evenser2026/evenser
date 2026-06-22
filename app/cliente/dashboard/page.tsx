@@ -36,52 +36,60 @@ export default function ClienteDashboardPage() {
     pagado: "green", pendiente: "amber", vencido: "red",
   };
 
+  const iniciales = (nombre: string, apellido: string) =>
+    `${nombre[0] ?? ""}${apellido[0] ?? ""}`.toUpperCase();
+
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-bold text-gray-900">Hola, {cliente.nombre} 👋</h1>
-        <p className="text-sm text-gray-500">{cliente.localidad}</p>
+      <div className="pt-1 pb-2">
+        <h1 className="text-xl font-semibold text-brand-950">Hola, {cliente.nombre} 👋</h1>
+        <p className="text-sm text-brand-500">{cliente.localidad} · Afiliado/a activo/a</p>
       </div>
 
-      <div className="card p-5 space-y-3">
-        <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">Estado de cuenta</p>
+      <div className="card p-5 space-y-0 border-l-4 border-l-brand-700">
+        <p className="text-xs text-brand-400 uppercase tracking-wider font-medium mb-3">Estado de cuenta</p>
         {ultimoPago ? (
           <>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Último pago</span>
-              <span className="text-sm font-semibold">{formatCurrency(ultimoPago.monto)}</span>
+            <p className="text-3xl font-semibold text-brand-950 mb-3">{formatCurrency(ultimoPago.monto)}</p>
+            <div className="flex items-center justify-between py-2 border-b border-brand-100">
+              <span className="text-sm text-brand-500">Último pago</span>
+              <span className="text-sm font-medium text-brand-900">{formatDate(ultimoPago.fecha)}</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Fecha</span>
-              <span className="text-sm">{formatDate(ultimoPago.fecha)}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Estado</span>
+            <div className="flex items-center justify-between py-2 border-b border-brand-100">
+              <span className="text-sm text-brand-500">Estado</span>
               <Badge variant={estadoVariant[ultimoPago.estado]}>{ultimoPago.estado}</Badge>
             </div>
             {ultimoPago.fecha_vence && (
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Próximo vencimiento</span>
-                <span className="text-sm">{formatDate(ultimoPago.fecha_vence)}</span>
+              <div className="flex items-center justify-between py-2">
+                <span className="text-sm text-brand-500">Próximo vencimiento</span>
+                <span className="text-sm font-medium text-brand-900">{formatDate(ultimoPago.fecha_vence)}</span>
               </div>
             )}
           </>
         ) : (
-          <p className="text-sm text-gray-400">Sin pagos registrados</p>
+          <p className="text-sm text-brand-300">Sin pagos registrados</p>
         )}
       </div>
 
-      <div className="card p-5 space-y-3">
-        <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">Grupo familiar</p>
+      <div className="card p-5">
+        <p className="text-xs text-brand-400 uppercase tracking-wider font-medium mb-3">Grupo familiar</p>
         {cliente.family_members?.length ? (
-          cliente.family_members.map((f: any) => (
-            <div key={f.id} className="flex items-center justify-between">
-              <span className="text-sm text-gray-900">{f.nombre} {f.apellido}</span>
-              <span className="text-xs text-gray-400">{f.parentesco}</span>
-            </div>
-          ))
+          <div className="space-y-0">
+            {cliente.family_members.map((f: any) => (
+              <div key={f.id} className="flex items-center gap-3 py-2 border-b border-brand-100 last:border-0">
+                <div className="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-xs font-medium text-brand-700 shrink-0">
+                  {iniciales(f.nombre, f.apellido)}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-brand-900">{f.nombre} {f.apellido}</p>
+                  <p className="text-xs text-brand-400">{f.parentesco}</p>
+                </div>
+                {f.edad && <span className="text-xs text-brand-400 bg-brand-50 border border-brand-100 px-2 py-0.5 rounded-full">{f.edad} años</span>}
+              </div>
+            ))}
+          </div>
         ) : (
-          <p className="text-sm text-gray-400">Sin familiares registrados</p>
+          <p className="text-sm text-brand-300">Sin familiares registrados</p>
         )}
       </div>
     </div>

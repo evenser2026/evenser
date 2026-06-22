@@ -85,26 +85,26 @@ export default function ClientePagosPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold text-gray-900">Mis pagos</h1>
+      <h1 className="text-xl font-semibold text-brand-950 pt-1 pb-2">Mis pagos</h1>
       {!pagos.length ? (
-        <div className="card p-8 text-center text-gray-400 text-sm">Sin pagos registrados</div>
+        <div className="card p-8 text-center text-brand-300 text-sm">Sin pagos registrados</div>
       ) : (
         <div className="space-y-3">
           {pagos.map((p) => (
-            <div key={p.id} className="card p-4 space-y-2">
+            <div key={p.id} className="card p-4 space-y-2 border-l-4 border-l-brand-200">
               <div className="flex items-center justify-between">
-                <span className="font-semibold text-gray-900">{formatCurrency(p.monto)}</span>
+                <span className="text-2xl font-semibold text-brand-950">{formatCurrency(p.monto)}</span>
                 <Badge variant={estadoVariant[p.estado]}>{p.estado}</Badge>
               </div>
-              <div className="flex items-center justify-between text-xs text-gray-500">
+              <div className="flex items-center justify-between text-xs text-brand-400 border-t border-brand-50 pt-2">
                 <span>{formatDate(p.fecha)}</span>
                 <span className="capitalize">{p.metodo_pago.replace("_", " ")}</span>
               </div>
               {p.descripcion && (
-                <p className="text-xs text-gray-400">{p.descripcion}</p>
+                <p className="text-xs text-brand-400">{p.descripcion}</p>
               )}
               {p.fecha_vence && (
-                <p className="text-xs text-gray-400">Vence: {formatDate(p.fecha_vence)}</p>
+                <p className="text-xs text-brand-400">Vence: {formatDate(p.fecha_vence)}</p>
               )}
               {p.estado === "pagado" && (
                 <button

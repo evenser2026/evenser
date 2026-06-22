@@ -36,25 +36,29 @@ export default function ClienteLayout({ children }: { children: React.ReactNode 
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-        <span className="font-semibold text-gray-900 text-sm">Portal Evenser</span>
-        <button onClick={handleLogout} className="text-gray-400 hover:text-gray-700">
+    <div className="min-h-screen bg-brand-50">
+      <header className="bg-brand-950 px-4 py-3 flex items-center justify-between">
+        <div>
+          <span className="font-semibold text-white text-sm tracking-wide">Evenser</span>
+          <p className="text-xs text-brand-400">Portal de afiliados</p>
+        </div>
+        <button onClick={handleLogout} className="text-brand-400 hover:text-white transition-colors">
           <LogOut size={18} />
         </button>
       </header>
       <main className="p-4 pb-24">{children}</main>
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-brand-100 flex">
         {navItems.map(({ href, label, icon: Icon }) => (
           <Link
             key={href}
             href={href}
             className={`flex-1 flex flex-col items-center py-3 text-xs gap-1 transition-colors ${
-              pathname === href ? "text-brand-700 font-medium" : "text-gray-400"
+              pathname === href ? "text-brand-800 font-medium" : "text-brand-300"
             }`}
           >
             <Icon size={20} />
             {label}
+            {pathname === href && <span className="w-1 h-1 rounded-full bg-brand-700" />}
           </Link>
         ))}
       </nav>
