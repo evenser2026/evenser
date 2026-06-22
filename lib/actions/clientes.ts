@@ -80,3 +80,47 @@ export async function deleteCliente(id: string) {
   revalidatePath('/admin/clientes')
   return { success: true }
 }
+
+export async function activarPortalCliente(id: string, dni: string) {
+  const { createAdminClient } = await import('@/lib/supabase/server')
+  const supabaseAdmin = createAdminClient()
+  const email = `${dni}@evenser.internal`
+
+  const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    email,
+    password: dni,
+    email_confirm: true,
+  })
+  if (authError) {
+    if (!authError.message.includes('already')) return { error: authError.message }
+    const { data: list } = await supabaseAdmin.auth.admin.listUsers()
+    const existing = list?.users?.find((u) => u.email === email)
+    if (!existing) return { error: 'Usuario ya existe pero no se pudo recuperar' }
+    const { error: updateError } = await supabaseAdmin
+      .from('clients')
+      .update({ portal_activo: true, portal_user_id: existing.id })
+      .eq('id', id)
+    if (updateError) return { error: updateError.message }
+    revalidatePath(`/admin/clientes/${id}`)
+    return { success: true }
+  }
+
+  const { error: updateError } = await supabaseAdmin
+    .from('clients')
+    .update({ portal_activo: true, portal_user_id: authUser.user.id })
+    .eq('id', id)
+  if (updateError) return { error: updateError.message }
+  revalidatePath(`/admin/clientes/${id}`)
+  return { success: true }
+}
+
+export async function desactivarPortalCliente(id: string) {
+  const supabase = createClient()
+  const { error } = await supabase
+    .from('clients')
+    .update({ portal_activo: false })
+    .eq('id', id)
+  if (error) return { error: error.message }
+  revalidatePath(`/admin/clientes/${id}`)
+  return { success: true }
+}
