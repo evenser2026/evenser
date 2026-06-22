@@ -85,14 +85,14 @@
 > Agregado 2026-06-22. Portal read-only para afiliados con auth DNI + password via Supabase Auth.
 
 ### Tareas en orden de ejecución
-- [ ] 1. Agregar columnas `portal_activo` (bool) y `portal_password_set` (bool) en tabla `clients` via Supabase SQL
-- [ ] 2. Lógica de alta en Supabase Auth desde admin — toggle 'Activar acceso portal' en detalle de cliente
-- [ ] 3. Login `/cliente` — formulario DNI + password (ruta pública)
-- [ ] 4. Layout con protección de ruta para `/cliente/(portal)/*`
-- [ ] 5. Dashboard del afiliado — nombre, plan, estado de cuenta, próximo vencimiento, grupo familiar
-- [ ] 6. Página de pagos — historial + generación de PDF comprobante on-demand
-- [ ] 7. Página de perfil — ver datos + editar solo teléfono
-- [ ] 8. Cambio de contraseña desde el portal
+- [x] 1. Agregar columnas `portal_activo` y `portal_user_id` en tabla `clients` via Supabase SQL
+- [x] 2. Lógica de alta en Supabase Auth desde admin — botón Activar/Desactivar en detalle de cliente
+- [x] 3. Login `/cliente` — formulario DNI + password (ruta pública)
+- [x] 4. Layout con protección de ruta para `/cliente/*` + navbar mobile
+- [x] 5. Dashboard del afiliado — nombre, estado de cuenta, próximo vencimiento, grupo familiar
+- [ ] 6. Página de pagos — historial ✅ / generación de PDF comprobante ❌ pendiente
+- [x] 7. Página de perfil — ver datos + editar teléfono
+- [x] 8. Cambio de contraseña desde el portal
 
 ### Decisiones tomadas
 - Auth: Supabase Auth con email ficticio `{dni}@evenser.internal`
