@@ -40,16 +40,16 @@
 
 ### types/index.ts
 - [x] **[ALTO]** `Convenio` no tiene campo `descripcion` ni `localidad` ni `direccion` ni `email` → están en DB pero no en el tipo
-- [ ] **[MEDIO]** `ContractModification` tiene `campo` y `valor_anterior`/`valor_nuevo` → DB tiene `campo_anterior`, `campo_nuevo`, `tipo`, `descripcion`, `usuario_id`
+- [x] **[MEDIO]** `ContractModification` — sincronizado con schema real
 - [x] **[MEDIO]** `PetCremation` usa `mascota_especie` y `mascota_raza` → DB tiene `especie` y `raza`
 - [x] **[MEDIO]** `AccountingEntry` tiene `cerrado: boolean` → no existe en DB
 - [x] **[BAJO]** `localidad_enum` en tipos no incluye `Lapachito` ni `Capitán Solari`
 
 ### contratos_insumos.ts
-- [ ] **[MEDIO]** `registrarModificacion` y `registerContractModification` usan campos viejos (`campo`, `valor_anterior`, `valor_nuevo`, `usuario_email`) → DB tiene `campo_anterior`, `campo_nuevo`, `tipo`, `descripcion`, `usuario_id`
+- [x] **[MEDIO]** `registrarModificacion` y `registerContractModification` — sincronizados con schema real
 
 ### clientes
-- [ ] **[ALTO]** Eliminar cliente desde admin no borra el registro en DB — verificar action y cascade en FK
+- [x] **[ALTO]** Eliminar cliente desde admin — implementado soft delete (desactivar) + hard delete con doble confirmación
 
 ### supabase/schema.sql
 - [ ] **[BAJO]** `schema.sql` está desactualizado → usar `schema_real.sql` como referencia
@@ -88,7 +88,7 @@
 - [x] 3. Login `/cliente` — formulario DNI + password (ruta pública)
 - [x] 4. Layout con protección de ruta para `/cliente/*` + navbar mobile
 - [x] 5. Dashboard del afiliado — nombre, estado de cuenta, próximo vencimiento, grupo familiar
-- [ ] 6. Página de pagos — historial ✅ / generación de PDF comprobante ❌ pendiente
+- [x] 6. Página de pagos — historial ✅ / generación de PDF comprobante ✅
 - [x] 7. Página de perfil — ver datos + editar teléfono
 - [x] 8. Cambio de contraseña desde el portal
 
