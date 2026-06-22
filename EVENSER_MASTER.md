@@ -94,10 +94,6 @@ evenser/
 | `pet_cremations` | Cremación de mascotas |
 | `accounting_entries` | Contabilidad ingresos/egresos |
 | `contract_modifications` | Historial de modificaciones de contrato |
-| `events` | Eventos (empresariales, recepciones, etc.) |
-| `event_images` | Imágenes de eventos en Cloudinary |
-| `event_services` | Servicios incluidos en cada evento |
-| `event_inquiries` | Consultas/presupuestos de eventos |
 | `cemetery_sections` | Secciones del cementerio |
 | `cemetery_plots` | Parcelas individuales del cementerio |
 | `supplies` | Insumos/accesorios con stock |
@@ -117,15 +113,11 @@ tipo_pago_enum:          mensual | unico | prepago
 tipo_servicio_enum:      traslado | servicios_de_calle | capilla_ardiente | servicio_de_sala | tramite_registro | cremacion
 estado_servicio_enum:    pendiente | en_proceso | completado | cancelado
 tipo_convenio_enum:      empresa | sindicato | municipio | residencia_adultos
-tipo_evento_enum:        empresarial | recepcion | social | cumpleanos | casamiento | otro
-estado_evento_enum:      borrador | publicado | archivado
-tipo_servicio_evento_enum: sonido | iluminacion | foto | video | catering | decoracion
-estado_consulta_enum:    nueva | en_contacto | presupuestada | confirmada | cancelada
 estado_deceased_enum:    en_proceso | completado | cancelado
 estado_parcela_enum:     libre | reservado | ocupado | mantenimiento
 especie_enum:            perro | gato | ave | conejo | otro
 tipo_movimiento_enum:    ingreso | egreso
-categoria_movimiento_enum: cuota_mensual | servicio_funerario | cremacion_mascota | convenio | insumo | salario | alquiler | impuesto | evento | otro
+categoria_movimiento_enum: cuota_mensual | servicio_funerario | cremacion_mascota | convenio | insumo | salario | alquiler | impuesto | otro
 categoria_insumo_enum:   ataud | urna | flores | velas | ropa | higiene | papeleria | ferreteria | otro
 tipo_modificacion_enum:  cambio_plan | cambio_localidad | cambio_obra_social | alta_familiar | baja_familiar | cambio_telefono | otro
 estado_parcela_enum:     libre | reservado | ocupado | mantenimiento
@@ -167,7 +159,6 @@ estado_parcela_enum:     libre | reservado | ocupado | mantenimiento
 ### ⚠️ Creados en DB pero sin UI completa
 | Módulo | Tabla | Estado |
 |--------|-------|--------|
-| Eventos | events + event_images + event_services + event_inquiries | Sin UI |
 | Cementerio | cemetery_sections + cemetery_plots | Sin UI |
 | Insumos | supplies + supply_movements | Sin UI |
 | Suscripciones MP | suscripciones_mp | Endpoint creado, flujo incompleto |

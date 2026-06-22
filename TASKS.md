@@ -14,7 +14,6 @@
 4. [x] Fix warning useEffect en `app/admin/contabilidad/page.tsx` línea 52
 
 ### 🟠 P1 — Alto (esta semana)
-5. [ ] Módulo Eventos completo → UI para `events` + `event_images` + `event_services` + `event_inquiries`
 6. [x] Módulo Insumos completo → UI para `supplies` + `supply_movements` (stock, alertas mínimo)
 7. [ ] Módulo Cementerio → UI para `cemetery_sections` + `cemetery_plots` (visual de parcelas)
 8. [x] Suscripciones MP completas → flujo alta/baja/pausa con `suscripciones_mp`
@@ -41,7 +40,6 @@
 
 ### types/index.ts
 - [x] **[ALTO]** `Convenio` no tiene campo `descripcion` ni `localidad` ni `direccion` ni `email` → están en DB pero no en el tipo
-- [x] **[ALTO]** Faltan interfaces: `Event`, `EventImage`, `EventService`, `EventInquiry`, `CemeterySection`, `CemeteryPlot`, `Supply`, `SupplyMovement`
 - [ ] **[MEDIO]** `ContractModification` tiene `campo` y `valor_anterior`/`valor_nuevo` → DB tiene `campo_anterior`, `campo_nuevo`, `tipo`, `descripcion`, `usuario_id`
 - [x] **[MEDIO]** `PetCremation` usa `mascota_especie` y `mascota_raza` → DB tiene `especie` y `raza`
 - [x] **[MEDIO]** `AccountingEntry` tiene `cerrado: boolean` → no existe en DB

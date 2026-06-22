@@ -294,62 +294,9 @@ export interface ContractModification {
 
 // ── Eventos ───────────────────────────────────────────────────
 
-export interface Event {
-  id: string;
-  titulo: string;
-  tipo: TipoEvento;
-  fecha: string;
-  hora?: string;
-  lugar?: string;
-  descripcion?: string;
-  capacidad?: number;
-  estado: EstadoEvento;
-  portada_url?: string;
-  destacado: boolean;
-  precio_desde?: number;
-  created_by?: string;
-  created_at: string;
-  updated_at: string;
-  // joins opcionales
-  imagenes?: EventImage[];
-  servicios?: EventService[];
-}
 
-export interface EventImage {
-  id: string;
-  event_id: string;
-  url: string;
-  public_id?: string;
-  caption?: string;
-  orden: number;
-  created_at: string;
-}
 
-export interface EventService {
-  id: string;
-  event_id: string;
-  tipo: TipoServicioEvento;
-  descripcion?: string;
-  proveedor?: string;
-  incluido: boolean;
-  created_at: string;
-}
 
-export interface EventInquiry {
-  id: string;
-  event_id?: string;
-  tipo_evento_req?: TipoEvento;
-  nombre: string;
-  telefono: string;
-  email?: string;
-  mensaje?: string;
-  fecha_estimada?: string;
-  cantidad_personas?: number;
-  estado: EstadoConsulta;
-  notas_internas?: string;
-  created_at: string;
-  updated_at: string;
-}
 
 // ── Cementerio ────────────────────────────────────────────────
 
