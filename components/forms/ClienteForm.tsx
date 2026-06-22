@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   clienteSchema,
+  OBRAS_SOCIALES,
   type ClienteInput,
 } from "@/lib/validations";
 import { FormField } from "@/components/ui";
@@ -43,6 +44,7 @@ export default function ClienteForm({
 
   const {
     register,
+    watch,
     handleSubmit,
     formState: { errors },
   } = useForm<ClienteInput>({
@@ -53,7 +55,8 @@ export default function ClienteForm({
       dni: defaultValues?.dni ?? "",
       telefono: defaultValues?.telefono ?? "",
       ocupacion: defaultValues?.ocupacion ?? "",
-      obra_social: defaultValues?.obra_social ?? "",
+      obra_social: defaultValues?.obra_social ?? undefined,
+      obra_social_nro_credencial: defaultValues?.obra_social_nro_credencial ?? "",
       localidad: defaultValues?.localidad ?? ("" as any),
       carpeta_nacimiento: defaultValues?.carpeta_nacimiento ?? "",
       metodo_cobro: defaultValues?.metodo_cobro ?? "manual",
@@ -110,12 +113,22 @@ export default function ClienteForm({
           />
         </FormField>
         <FormField label="Obra social" error={errors.obra_social?.message}>
-          <input
-            {...register("obra_social")}
-            className="input"
-            placeholder="OSDE / INSEP"
-          />
+          <select {...register("obra_social")} className="input">
+            <option value="">Sin obra social</option>
+            {OBRAS_SOCIALES.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
         </FormField>
+        {OBRAS_SOCIALES.find((o) => o.value === watch("obra_social"))?.requiere_credencial && (
+          <FormField label="Nº Credencial INSSSEP" error={errors.obra_social_nro_credencial?.message}>
+            <input
+              {...register("obra_social_nro_credencial")}
+              className="input"
+              placeholder="Número de credencial"
+            />
+          </FormField>
+        )}
       </div>
 
       <FormField label="Localidad" error={errors.localidad?.message} required>

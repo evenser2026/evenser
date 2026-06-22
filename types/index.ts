@@ -121,6 +121,7 @@ export interface Cliente {
   telefono: string;
   ocupacion?: string;
   obra_social?: string;
+  obra_social_nro_credencial?: string;
   localidad: Localidad;
   carpeta_nacimiento?: string;
   activo: boolean;

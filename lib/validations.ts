@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+export const OBRAS_SOCIALES = [
+  { value: "INSSSEP", label: "INSSSEP", requiere_credencial: true },
+  { value: "Ninguna", label: "Sin obra social", requiere_credencial: false },
+] as const;
+
 export const localidades = [
   "Col. Elisa",
   "La Escondida",
@@ -17,6 +22,7 @@ export const clienteSchema = z.object({
   telefono: z.string().min(8, "Teléfono requerido"),
   ocupacion: z.string().optional(),
   obra_social: z.string().optional(),
+  obra_social_nro_credencial: z.string().optional(),
   localidad: z.enum(localidades, {
     errorMap: () => ({ message: "Seleccioná una localidad" }),
   }),

@@ -69,6 +69,7 @@ CREATE TABLE clients (
   telefono           TEXT NOT NULL,
   ocupacion          TEXT,
   obra_social        TEXT,
+  obra_social_nro_credencial TEXT,
   localidad          localidad_enum NOT NULL,
   carpeta_nacimiento TEXT,
   activo             BOOLEAN NOT NULL DEFAULT TRUE,
