@@ -52,7 +52,7 @@
 - [x] **[ALTO]** Eliminar cliente desde admin — implementado soft delete (desactivar) + hard delete con doble confirmación
 
 ### supabase/schema.sql
-- [ ] **[BAJO]** `schema.sql` está desactualizado → usar `schema_real.sql` como referencia
+- [x] **[BAJO]** `schema.sql` actualizado con `schema_real.sql`
 
 ---
 
