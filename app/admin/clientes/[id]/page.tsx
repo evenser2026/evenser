@@ -413,19 +413,15 @@ export default function ClienteDetailPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <p className="text-sm font-medium text-gray-900">
-                        {CAMPO_LABEL[h.campo] ?? h.campo}
+                        {h.descripcion}
                       </p>
-                      {h.usuario_nombre && (
-                        <span className="text-xs text-gray-400">por {h.usuario_nombre}</span>
-                      )}
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-400 line-through">{h.valor_anterior || "—"}</span>
-                      <span className="text-gray-400">→</span>
-                      <span className="text-gray-900 font-medium">{h.valor_nuevo || "—"}</span>
-                    </div>
-                    {h.motivo && (
-                      <p className="text-xs text-gray-500 mt-1">Motivo: {h.motivo}</p>
+                    {(h.campo_anterior || h.campo_nuevo) && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-gray-400 line-through">{h.campo_anterior || "—"}</span>
+                        <span className="text-gray-400">→</span>
+                        <span className="text-gray-900 font-medium">{h.campo_nuevo || "—"}</span>
+                      </div>
                     )}
                   </div>
                   <p className="text-xs text-gray-400 shrink-0">{formatDate(h.created_at)}</p>
