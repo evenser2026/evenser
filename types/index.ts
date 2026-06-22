@@ -122,6 +122,8 @@ export interface Cliente {
   ocupacion?: string;
   obra_social?: string;
   obra_social_nro_credencial?: string;
+  portal_activo?: boolean;
+  portal_user_id?: string;
   localidad: Localidad;
   carpeta_nacimiento?: string;
   activo: boolean;

@@ -70,6 +70,8 @@ CREATE TABLE clients (
   ocupacion          TEXT,
   obra_social        TEXT,
   obra_social_nro_credencial TEXT,
+  portal_activo      BOOLEAN NOT NULL DEFAULT FALSE,
+  portal_user_id     UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   localidad          localidad_enum NOT NULL,
   carpeta_nacimiento TEXT,
   activo             BOOLEAN NOT NULL DEFAULT TRUE,
