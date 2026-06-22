@@ -106,11 +106,11 @@
 > Agregado 2026-06-22. Actualmente es input libre, debe ser select controlado.
 
 ### Tareas
-- [ ] 1. Agregar enum `obra_social_enum` en Supabase: por ahora solo valor `INSSSEP`
-- [ ] 2. Migrar columna `obra_social` en tabla `clients` a usar el enum (o dejarlo TEXT con validación Zod)
-- [ ] 3. Reemplazar input libre por `<select>` en `ClienteForm` con opciones del enum
-- [ ] 4. Actualizar schema Zod en `validations.ts` para aceptar solo valores permitidos
-- [ ] 5. Verificar que registros existentes no queden con valor inválido
+- [x] 1. Agregar enum `obra_social_enum` en Supabase: por ahora solo valor `INSSSEP`
+- [x] 2. Migrar columna `obra_social` en tabla `clients` a usar el enum (o dejarlo TEXT con validación Zod)
+- [x] 3. Reemplazar input libre por `<select>` en `ClienteForm` con opciones del enum
+- [x] 4. Actualizar schema Zod en `validations.ts` para aceptar solo valores permitidos
+- [x] 5. Verificar que registros existentes no queden con valor inválido
 
 ### Decisiones tomadas
 - Por ahora una sola opción: INSSSEP
