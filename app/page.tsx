@@ -597,13 +597,15 @@ function FormAfiliacion({
           <label className="block text-xs font-medium text-gray-700 mb-1">
             Obra social
           </label>
-          <input
+          <select
             name="obra_social"
             value={form.obra_social}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-stone-500"
-            placeholder="PAMI, OSDE..."
-          />
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-stone-500 bg-white"
+          >
+            <option value="">Sin obra social</option>
+            <option value="INSSSEP">INSSSEP</option>
+          </select>
         </div>
       </div>
       <div className="bg-stone-50 border border-stone-200 rounded-lg p-3 flex items-center justify-between">
