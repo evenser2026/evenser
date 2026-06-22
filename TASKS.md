@@ -50,6 +50,9 @@
 ### contratos_insumos.ts
 - [ ] **[MEDIO]** `registrarModificacion` y `registerContractModification` usan campos viejos (`campo`, `valor_anterior`, `valor_nuevo`, `usuario_email`) → DB tiene `campo_anterior`, `campo_nuevo`, `tipo`, `descripcion`, `usuario_id`
 
+### clientes
+- [ ] **[ALTO]** Eliminar cliente desde admin no borra el registro en DB — verificar action y cascade en FK
+
 ### supabase/schema.sql
 - [ ] **[BAJO]** `schema.sql` está desactualizado → usar `schema_real.sql` como referencia
 
@@ -75,3 +78,24 @@
 | 2026-06-12 | Crons diarios Vercel — check-vencidos 8am + check-payments 9am ARG | vercel.json | ✅ |
 | 2026-06-12 | Mensaje Telegram enriquecido con nombre cliente y operación | app/api/webhooks/mercadopago/route.ts | ✅ |
 | 2026-06-12 | Fix afiliacion usa createAdminClient para leer config sin sesión | app/api/afiliacion/route.ts | ✅ |
+
+---
+
+## 🔵 Portal de Afiliados — /cliente
+> Agregado 2026-06-22. Portal read-only para afiliados con auth DNI + password via Supabase Auth.
+
+### Tareas en orden de ejecución
+- [ ] 1. Agregar columnas `portal_activo` (bool) y `portal_password_set` (bool) en tabla `clients` via Supabase SQL
+- [ ] 2. Lógica de alta en Supabase Auth desde admin — toggle 'Activar acceso portal' en detalle de cliente
+- [ ] 3. Login `/cliente` — formulario DNI + password (ruta pública)
+- [ ] 4. Layout con protección de ruta para `/cliente/(portal)/*`
+- [ ] 5. Dashboard del afiliado — nombre, plan, estado de cuenta, próximo vencimiento, grupo familiar
+- [ ] 6. Página de pagos — historial + generación de PDF comprobante on-demand
+- [ ] 7. Página de perfil — ver datos + editar solo teléfono
+- [ ] 8. Cambio de contraseña desde el portal
+
+### Decisiones tomadas
+- Auth: Supabase Auth con email ficticio `{dni}@evenser.internal`
+- El admin activa el acceso, el afiliado no se registra solo
+- Vive en `/cliente` dentro del mismo proyecto Next.js
+- Acciones permitidas: ver info, descargar comprobantes, editar teléfono, cambiar password
