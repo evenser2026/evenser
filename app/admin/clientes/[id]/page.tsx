@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getClienteById, updateCliente, activarPortalCliente, desactivarPortalCliente } from "@/lib/actions/clientes";
+import { getClienteById, updateCliente, deleteCliente, activarPortalCliente, desactivarPortalCliente, eliminarCliente } from "@/lib/actions/clientes";
 import { createFamiliar, deleteFamiliar } from "@/lib/actions/familiares";
 import { createPago } from "@/lib/actions/pagos";
 import { createServicio } from "@/lib/actions/servicios";
@@ -159,6 +159,29 @@ export default function ClienteDetailPage() {
           className="btn-secondary flex items-center gap-2 text-sm text-red-600 border-red-200 hover:bg-red-50"
         >
           <HeartPulse size={15} /> Registrar fallecimiento
+        </button>
+        <button
+          onClick={async () => {
+            if (!window.confirm(`¿Desactivar a ${cliente.nombre} ${cliente.apellido}? El registro se conserva.`)) return;
+            const res = await deleteCliente(id);
+            if (res?.error) setError(res.error);
+            else router.push('/admin/clientes');
+          }}
+          className="btn-secondary text-sm"
+        >
+          Desactivar
+        </button>
+        <button
+          onClick={async () => {
+            if (!window.confirm(`¿ELIMINAR a ${cliente.nombre} ${cliente.apellido}? Esta acción es IRREVERSIBLE.`)) return;
+            if (!window.confirm('Segunda confirmación: se borrarán TODOS los datos del cliente. ¿Continuar?')) return;
+            const res = await eliminarCliente(id);
+            if (res?.error) setError(res.error);
+            else router.push('/admin/clientes');
+          }}
+          className="btn-secondary text-sm text-red-600 border-red-200 hover:bg-red-50"
+        >
+          Eliminar
         </button>
         <button onClick={() => openModal("edit")} className="btn-secondary">
           Editar

@@ -81,6 +81,26 @@ export async function deleteCliente(id: string) {
   return { success: true }
 }
 
+export async function eliminarCliente(id: string) {
+  const supabase = createClient()
+  // Nullificar FKs sin CASCADE antes de borrar
+  const tablasSinCascade = [
+    { tabla: 'deceased_records', campo: 'cliente_id' },
+    { tabla: 'pet_cremations', campo: 'cliente_id' },
+    { tabla: 'contract_modifications', campo: 'cliente_id' },
+    { tabla: 'suscripciones_mp', campo: 'cliente_id' },
+    { tabla: 'push_subscriptions', campo: 'cliente_id' },
+    { tabla: 'accounting_entries', campo: 'cliente_id' },
+  ]
+  for (const { tabla, campo } of tablasSinCascade) {
+    await supabase.from(tabla).update({ [campo]: null }).eq(campo, id)
+  }
+  const { error } = await supabase.from('clients').delete().eq('id', id)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/clientes')
+  return { success: true }
+}
+
 export async function activarPortalCliente(id: string, dni: string) {
   const { createAdminClient } = await import('@/lib/supabase/server')
   const supabaseAdmin = createAdminClient()
