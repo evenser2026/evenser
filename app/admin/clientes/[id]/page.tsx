@@ -221,6 +221,7 @@ export default function ClienteDetailPage() {
               ["Teléfono", cliente.telefono],
               ["Ocupación", cliente.ocupacion || "—"],
               ["Obra social", cliente.obra_social || "—"],
+              ...(cliente.obra_social ? [["Nº Credencial", cliente.obra_social_nro_credencial || "—"]] : []),
               ["Localidad", cliente.localidad],
               ["Carpeta / Ref.", cliente.carpeta_nacimiento || "—"],
               ["Alta en sistema", formatDate(cliente.created_at)],
