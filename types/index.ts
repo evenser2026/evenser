@@ -119,6 +119,7 @@ export interface Cliente {
   apellido: string;
   dni: string;
   telefono: string;
+  email?: string;
   ocupacion?: string;
   obra_social?: string;
   obra_social_nro_credencial?: string;

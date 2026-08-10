@@ -31,6 +31,7 @@ export async function POST(request: NextRequest) {
         apellido,
         dni,
         telefono,
+        email: email || null,
         ocupacion: ocupacion || null,
         obra_social: obra_social || null,
         localidad,

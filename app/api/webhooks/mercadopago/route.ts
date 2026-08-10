@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { enviarNotificacion } from "@/lib/actions/push";
 import { sendTelegram } from "@/lib/telegram";
+import {
+  enviarEmailNotificacionAngel,
+  enviarEmailBienvenidaCliente,
+} from "@/lib/email/mailer";
 import crypto from "crypto";
 
 // ✅ Verifica la firma del webhook enviada por MercadoPago
@@ -170,6 +174,52 @@ async function handlePago(pagoId: string) {
         "[MP Webhook] Error al insertar en contabilidad:",
         errorContabilidad,
       );
+    }
+
+    // ✅ Alta nueva: si es el primer pago del cliente, avisar por email
+    // a Ángel y al cliente ("un representante se pondrá en contacto").
+    const { count: cantidadPagos } = await supabase
+      .from("payments")
+      .select("id", { count: "exact", head: true })
+      .eq("cliente_id", suscripcion.cliente_id);
+
+    if (cantidadPagos === 1) {
+      const { data: clienteInfo } = await supabase
+        .from("clients")
+        .select("nombre, apellido, dni, telefono, localidad, obra_social, email")
+        .eq("id", suscripcion.cliente_id)
+        .single();
+
+      if (clienteInfo) {
+        try {
+          await enviarEmailNotificacionAngel({
+            nombre: clienteInfo.nombre,
+            apellido: clienteInfo.apellido,
+            dni: clienteInfo.dni,
+            telefono: clienteInfo.telefono,
+            localidad: clienteInfo.localidad,
+            obraSocial: clienteInfo.obra_social,
+            monto: montoFinal,
+          });
+
+          if (clienteInfo.email) {
+            await enviarEmailBienvenidaCliente({
+              emailDestino: clienteInfo.email,
+              nombre: clienteInfo.nombre,
+            });
+          } else {
+            console.warn(
+              "[MP Webhook] Cliente sin email registrado, no se envía bienvenida:",
+              suscripcion.cliente_id,
+            );
+          }
+        } catch (emailError) {
+          console.error(
+            "[MP Webhook] Error enviando emails de alta:",
+            emailError,
+          );
+        }
+      }
     }
   }
 
