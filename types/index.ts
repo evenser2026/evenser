@@ -332,6 +332,38 @@ export interface CemeteryPlot {
   cliente?: Pick<Cliente, "id" | "nombre" | "apellido">;
 }
 
+// ── Memorial Virtual ────────────────────────────────────────────
+
+export type EstadoMensaje = "visible" | "oculto";
+
+export interface Memorial {
+  id: string;
+  deceased_id: string;
+  slug: string;
+  foto_url?: string;
+  frase?: string;
+  biografia?: string;
+  velas_count: number;
+  activo: boolean;
+  created_at: string;
+  updated_at: string;
+  // joins opcionales
+  deceased?: Pick<
+    DeceasedRecord,
+    "id" | "nombre_fallecido" | "apellido_fallecido" | "fecha_fallecimiento"
+  >;
+  mensajes?: MemorialMessage[];
+}
+
+export interface MemorialMessage {
+  id: string;
+  memorial_id: string;
+  autor_nombre: string;
+  mensaje: string;
+  estado: EstadoMensaje;
+  created_at: string;
+}
+
 // ── Insumos ───────────────────────────────────────────────────
 
 export interface Supply {

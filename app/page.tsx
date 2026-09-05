@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import FaqWidget from "@/components/FaqWidget";
 
 
 // ─── Data ────────────────────────────────────────────────────────────────────
@@ -197,6 +198,12 @@ function Nav({ onAfiliarse }: { onAfiliarse: () => void }) {
           >
             Contacto
           </a>
+          <a
+            href="/cementerio"
+            className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            Cementerio Virtual
+          </a>
           <button
             onClick={onAfiliarse}
             className="bg-stone-800 text-white text-sm px-4 py-2 rounded-lg hover:bg-stone-900 transition-colors font-medium"
@@ -266,6 +273,13 @@ function Nav({ onAfiliarse }: { onAfiliarse: () => void }) {
             className="block text-sm text-gray-700 py-2"
           >
             Contacto
+          </a>
+          <a
+            href="/cementerio"
+            onClick={() => setOpen(false)}
+            className="block text-sm text-gray-700 py-2"
+          >
+            Cementerio Virtual
           </a>
           <button
             onClick={() => {
@@ -1000,7 +1014,7 @@ export default function LandingPage() {
                 >
                   <Image
                     src={s.icon}
-                    alt={s.titulo}
+                    alt={`${s.titulo} — servicio fúnebre Evenser en Colonia Elisa, Chaco`}
                     fill
                     className="object-cover transition-transform duration-300 group-hover:scale-105"
                     sizes="192px"
@@ -1347,7 +1361,8 @@ export default function LandingPage() {
         </div>
       )}
 
+      <FaqWidget />
     </div>
-    
+
   );
 }

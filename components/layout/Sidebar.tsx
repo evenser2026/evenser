@@ -19,6 +19,8 @@ import {
   BookOpen,
   Package,
   Repeat,
+  MapPin,
+  Flame,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +37,8 @@ const nav: NavItem[] = [
   { href: "/admin/servicios", label: "Servicios", icon: Briefcase },
   { href: "/admin/convenios", label: "Convenios", icon: Handshake },
   { href: "/admin/fallecidos", label: "Fallecidos", icon: HeartPulse },
+  { href: "/admin/cementerio", label: "Cementerio", icon: MapPin },
+  { href: "/admin/memorial", label: "Memorial Virtual", icon: Flame },
   { href: "/admin/mascotas", label: "Cremación mascotas", icon: PawPrint },
   { href: "/admin/insumos", label: "Insumos", icon: Package },
   { href: "/admin/suscripciones", label: "Suscripciones MP", icon: Repeat },
