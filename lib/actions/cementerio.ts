@@ -1,5 +1,5 @@
 "use server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type {
   SeccionInput,
@@ -14,6 +14,34 @@ export async function getSecciones() {
     .select("*")
     .eq("activo", true)
     .order("orden");
+  if (error) throw error;
+  return data ?? [];
+}
+
+// ────────────────────────────────────────────────────────────
+// PÚBLICO (sin sesión — cliente con service role, solo datos
+// no sensibles: nada de precios, clientes ni observaciones)
+// ────────────────────────────────────────────────────────────
+
+export async function getSeccionesPublico() {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("cemetery_sections")
+    .select("id, nombre, descripcion, orden")
+    .eq("activo", true)
+    .order("orden");
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function getParcelasPublico(seccionId: string) {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("cemetery_plots")
+    .select("id, fila, columna, numero, estado")
+    .eq("seccion_id", seccionId)
+    .order("fila")
+    .order("columna");
   if (error) throw error;
   return data ?? [];
 }
